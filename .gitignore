@@ -1,0 +1,24 @@
+# Secrets - copy .env.example instead
+.env
+
+# Customer data and logs: never commit (DPDP)
+data/
+logs/
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.bmp
+*.pdf
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Temporary CSP passwords written by import-csps
+csp-passwords*.csv
+
+# Internal notes (work log, tracker, requests) - kept on the laptop only, never public
+internal/

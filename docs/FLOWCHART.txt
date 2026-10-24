@@ -1,0 +1,94 @@
+GRAHAK SAMPARK - FLOWCHART (aasan bhasha)
+==========================================
+
+            +---------------------------+
+            |   CSP link kholta hai     |
+            |   (phone / laptop)        |
+            +-------------+-------------+
+                          |
+                          v
+            +---------------------------+
+            |   LOGIN  (apni CSP ID)    |
+            +-------------+-------------+
+                          |
+                          v
+            +---------------------------+
+            |  List ki PHOTO ya EXCEL   |
+            |  upload karo              |
+            +------+-------------+------+
+                   |             |
+               PHOTO          EXCEL
+                   |             |
+                   v             |
+      +------------------------+ |
+      |  Photo saaf hai?       | |
+      +-----+-------------+----+ |
+            |             |      |
+           NAHI          HAAN    |
+            |             |      |
+            v             v      |
+   +----------------+  +--------------------------+
+   | "Saaf photo    |  |  OCR - list padhna       |
+   |  lo" - wapas   |  |                          |
+   |  upload        |  |  1. Voxomos (internet)   |
+   +----------------+  |     fail ho to ->        |
+                       |  2. RapidOCR (laptop par)|
+                       +------------+-------------+
+                                    |   <-- Excel yahan milta hai
+                                    v
+            +-------------------------------------+
+            |  Sirf 3 cheezein rakho:             |
+            |  ACCOUNT  +  NAAM  +  MOBILE        |
+            |  (baaki sab + photo: server bhool   |
+            |   jaata hai, list sirf PHONE mein)  |
+            +------------------+------------------+
+                               |
+                               v
+            +-------------------------------------+
+            |  Har row check:                     |
+            |   OK          = sab sahi            |
+            |   GALTI       = naam/number galat,  |
+            |                 duplicate           |
+            |   MOBILE NAHI = call / visit karo   |
+            +------------------+------------------+
+                               |
+                               v
+            +-------------------------------------+
+            |  CSP paper se milata hai            |
+            |  galti theek karta hai              |
+            |  tick lagata hai -> SAVE            |
+            +------------------+------------------+
+                               |
+                               v
+            +-------------------------------------+
+            |  Har customer ke aage WHATSAPP      |
+            |  button -> tap -> Send              |
+            |  (Hindi + English message)          |
+            +------------------+------------------+
+                               |
+                               v
+            +-------------------------------------+
+            |  CSP KA PHONE (list yahin rehti hai)|
+            |   - 7 din baad reminder             |
+            |   - customer aaya? -> "AAYA" mark   |
+            |   - STOP bola -> kabhi message nahi |
+            |   - report admin ko                 |
+            |   - 30 din baad phone se delete     |
+            +-------------------------------------+
+
+
+DPDP (data suraksha)
+--------------------
+ * Sirf account, naam, mobile rakhte hain
+ * List server par KABHI save nahi - sirf CSP ke phone mein, 30 din baad delete
+ * Har CSP ko sirf apni list dikhti hai
+ * Log mein customer data nahi
+ * Voxomos asli list ke liye tabhi:
+     saving band + India server + agreement + naya key
+ * App ke andar koi AI (Claude) nahi
+
+
+KAHAN CHALTA HAI
+----------------
+ Abhi : laptop par  (127.0.0.1:8000)
+ Aage : India server par HTTPS link - CSP phone se kholega

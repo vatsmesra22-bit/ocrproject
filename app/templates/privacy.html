@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Privacy notice{% endblock %}
+{% block main %}
+<div class="card">
+  <h1>Privacy notice / गोपनीयता सूचना</h1>
+  <p class="lead">How Grahak Sampark uses the data of SBI customers whose accounts have become inoperative,
+  under India's Digital Personal Data Protection Act, 2023.</p>
+
+  <h2>Who / कौन</h2>
+  <p>Grahak Sampark is run by <b>Eko Bharat Ventures</b> for SBI Customer Service Points (CSPs).
+  Your bank (SBI) shares the list of inoperative accounts with its CSP so that you can be told how to
+  reactivate your account.</p>
+
+  <h2>What data / कौन सा डेटा</h2>
+  <p>Only your <b>name, mobile number and account number</b>. Other details on the bank's list
+  (father's name, CIF, address) are not kept. The photo of the list is deleted as soon as it is read.</p>
+
+  <h2>Why / क्यों</h2>
+  <p>Only to send you one message: that your SBI account is inoperative and how to reactivate it at
+  your CSP. It is not used for anything else, not sold and not shared with anyone else.</p>
+
+  <h2>How long / कितने दिन</h2>
+  <p>Lists are <b>never stored on Eko's server</b> - they stay only on the CSP's phone and are deleted from it after <b>{{ retention_days }} days</b>. A record of actions
+  (without your name or full number) is kept for one year.</p>
+
+  <h2>Your rights / आपके अधिकार</h2>
+  <ul>
+    <li><b>Stop messages:</b> reply <b>STOP</b> to the message - you will not be messaged again.</li>
+    <li><b>Know, correct or delete your data:</b> contact us below; we will erase it from every list.</li>
+    <li><b>Complain:</b> contact us below. If you are not satisfied, you can complain to the
+    Data Protection Board of India.</li>
+  </ul>
+
+  <h2>Contact / संपर्क</h2>
+  {% if grievance %}
+  <p><b>{{ grievance }}</b></p>
+  {% else %}
+  <div class="alert warn">Grievance officer contact to be added by Eko before go-live
+  (setting GRIEVANCE_CONTACT).</div>
+  {% endif %}
+  <p class="muted" style="font-size:14px">You can also visit your CSP or SBI branch.</p>
+</div>
+{% endblock %}

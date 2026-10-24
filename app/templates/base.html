@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b5cab">
+<title>{% block title %}Home{% endblock %} · Grahak Sampark</title>
+<link rel="icon" type="image/svg+xml" href="/static/icon.svg">
+<link rel="apple-touch-icon" href="/static/icon.svg">
+<style>
+:root {
+  --brand: #0b5cab; --brand-dark: #08457f; --brand-soft: #e8f1fb;
+  --green: #12805c; --green-soft: #e3f5ee;
+  --red: #c62828; --red-soft: #fdecea;
+  --amber: #a15c00; --amber-soft: #fff4e0;
+  --blue: #0b5cab; --blue-soft: #e8f1fb;
+  --ink: #1b2430; --muted: #5d6b7a; --line: #dfe5ec;
+  --bg: #f3f6fb; --card: #ffffff;
+  --radius: 16px;
+  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 4px 16px rgba(16,24,40,.06);
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 17px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari", sans-serif;
+}
+a { color: var(--brand); }
+header.top {
+  background: linear-gradient(120deg, #1374d6 0%, #0b5cab 45%, #073d70 100%);
+  color: #fff; padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+  box-shadow: 0 2px 10px rgba(7,61,112,.25); position: sticky; top: 0; z-index: 10;
+}
+header.top a.home { display: flex; align-items: center; gap: 12px; color: inherit;
+  text-decoration: none; flex: 1; min-width: 0; }
+.btn-info {
+  display: inline-flex; align-items: center; gap: 6px; color: #fff; text-decoration: none;
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.35);
+  border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 600; white-space: nowrap;
+}
+.btn-info:hover { background: rgba(255,255,255,.24); }
+.btn-info .i { width: 20px; height: 20px; border-radius: 50%; background: #fff; color: var(--brand);
+  display: grid; place-items: center; font-weight: 800; font-size: 13px; font-style: normal; }
+header.top .logo { width: 40px; height: 40px; flex: none; border-radius: 11px;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.35); }
+header.top .by { display: flex; align-items: center; gap: 6px; font-size: 12px; opacity: .9; }
+header.top .by img { height: 22px; border-radius: 5px; }
+header.top .app { line-height: 1.2; flex: 1; min-width: 0; }
+header.top .app b { display: block; font-size: 18px; }
+header.top .app span { font-size: 13px; opacity: .85; }
+header.top form { margin: 0; }
+header.top .who { font-size: 13px; text-align: right; opacity: .9; }
+.btn-out {
+  background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.6);
+  border-radius: 10px; padding: 6px 12px; font: inherit; font-size: 14px; cursor: pointer;
+}
+main { max-width: 860px; margin: 0 auto; padding: 16px; }
+.card {
+  background: var(--card); border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--shadow); margin-bottom: 16px; border: 1px solid #e9eef5;
+}
+h1 { font-size: 24px; margin: 4px 0 4px; }
+h2 { font-size: 20px; margin: 0 0 12px; }
+.hi { color: var(--muted); font-size: .92em; }
+p.lead { color: var(--muted); margin: 0 0 16px; }
+label { display: block; font-weight: 600; margin: 14px 0 6px; }
+input[type=text], input[type=password], input[type=tel] {
+  width: 100%; font: inherit; padding: 12px 14px; border: 1.5px solid var(--line);
+  border-radius: 12px; background: #fff; color: var(--ink);
+}
+input:focus { outline: 3px solid var(--brand-soft); border-color: var(--brand); }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  font: inherit; font-weight: 700; border: 0; border-radius: 12px; cursor: pointer;
+  padding: 14px 22px; background: var(--brand); color: #fff; text-decoration: none;
+  min-height: 52px;
+}
+.btn:hover { background: var(--brand-dark); }
+.btn.big { width: 100%; font-size: 19px; min-height: 60px; }
+.btn.ghost { background: #fff; color: var(--brand); border: 1.5px solid var(--brand); }
+.btn.ghost:hover { background: var(--brand-soft); }
+.btn.green { background: var(--green); }
+.btn.danger { background: #fff; color: var(--red); border: 1.5px solid var(--red); }
+.btn.small { padding: 8px 14px; min-height: 40px; font-size: 15px; }
+.btn[disabled] { background: #c3ccd6; color: #fff; cursor: not-allowed; border: 0; }
+.alert { border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; font-weight: 600; }
+.alert.error { background: var(--red-soft); color: var(--red); }
+.alert.ok { background: var(--green-soft); color: var(--green); }
+.alert.info { background: var(--blue-soft); color: var(--blue); }
+.alert.warn { background: var(--amber-soft); color: var(--amber); }
+.pill {
+  display: inline-block; border-radius: 999px; padding: 4px 12px; font-size: 14px; font-weight: 700;
+  white-space: nowrap;
+}
+.pill.green { background: var(--green-soft); color: var(--green); }
+.pill.red { background: var(--red-soft); color: var(--red); }
+.pill.amber { background: var(--amber-soft); color: var(--amber); }
+.pill.blue { background: var(--blue-soft); color: var(--blue); }
+.steps { display: flex; gap: 8px; margin: 0 0 16px; padding: 0; list-style: none; }
+.steps li {
+  flex: 1; text-align: center; padding: 10px 6px; border-radius: 12px; background: #fff;
+  color: var(--muted); font-size: 14px; font-weight: 600; border: 1.5px solid var(--line);
+}
+.steps li b { display: block; font-size: 20px; }
+.steps li.on { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
+.steps li.done { border-color: var(--green); color: var(--green); background: var(--green-soft); }
+.muted { color: var(--muted); }
+.row-between { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.stack > * + * { margin-top: 12px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 14px; color: var(--muted); font-weight: 600; }
+.table-wrap { overflow-x: auto; }
+footer { text-align: center; color: var(--muted); font-size: 13px; padding: 8px 16px 32px; }
+@media (max-width: 520px) {
+  h1 { font-size: 21px; }
+  .card { padding: 16px; }
+  header.top .who span { display: none; }
+  header.top.in .app span { display: none; }
+  header.top .btn-info .lbl { display: none; }
+  header.top .btn-info { padding: 6px; }
+}
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+<header class="top{{ ' in' if user }}">
+  <a class="home" href="/">
+    <img class="logo" src="/static/icon.svg" alt="">
+    <div class="app"><b>Grahak Sampark <span style="opacity:.85;font-weight:600">· ग्राहक संपर्क</span></b>
+      <span class="by">{% if eko_logo %}<img src="/static/eko-logo.png" alt="Eko">{% endif %}by Eko Bharat Ventures</span></div>
+  </a>
+  <a class="btn-info" href="/about" title="How it works / कैसे काम करता है"><i class="i">i</i><span class="lbl">How it works</span></a>
+  {% if user %}
+  <div class="who"><b>{{ user.csp_code }}</b><br><span>{{ user.name }}</span></div>
+  <form method="post" action="/logout">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button class="btn-out" type="submit">Logout</button>
+  </form>
+  {% endif %}
+</header>
+<main>
+{% block main %}{% endblock %}
+</main>
+<footer>Customer lists stay only on the CSP's phone ({{ retention_days }} days) - never on the server, never shared.
+<a href="/privacy">Privacy notice / गोपनीयता सूचना</a><br>
+Grahak Sampark · Eko Bharat Ventures · for SBI CSPs</footer>
+</body>
+</html>

@@ -1,0 +1,624 @@
+{% extends "base.html" %}
+{% block title %}My lists{% endblock %}
+{% block head %}
+<style>
+.cust { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px; }
+.cust.bad { border-color: var(--red); background: var(--red-soft); }
+.cust.nomob { border-color: #e0a64a; background: var(--amber-soft); }
+.cust.stop { background: var(--bg); }
+.cust .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 10px; margin-top: 8px; }
+.cust .grid .full { grid-column: 1 / -1; }
+.cust label { margin: 0 0 2px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.cust input[type=text], .cust input[type=tel] { padding: 9px 11px; font-size: 16px; }
+.cust .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.cust .num { font-weight: 800; color: var(--muted); }
+.cust .problems { color: var(--red); font-size: 14px; font-weight: 600; margin-top: 6px; }
+.del { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 6px; font-weight: 600; margin: 0; }
+.only-bad .cust:not(.bad) { display: none; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.stats.four { grid-template-columns: repeat(4, 1fr); }
+.stat { background: var(--bg); border-radius: 12px; padding: 12px; text-align: center; }
+.stat b { display: block; font-size: 26px; }
+.stat.red b { color: var(--red); } .stat.green b { color: var(--green); } .stat.amber b { color: var(--amber); }
+.preview { white-space: pre-wrap; background: #e7ffdb; border-radius: 12px 12px 12px 2px; padding: 12px 14px;
+  font-size: 15px; box-shadow: 0 1px 1px rgba(0,0,0,.08); max-width: 520px; }
+.sticky { position: sticky; bottom: 0; background: linear-gradient(transparent, var(--bg) 30%); padding: 18px 0 8px; }
+.bar { height: 14px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 12px 0 6px; }
+.bar > div { height: 100%; background: var(--green); border-radius: 999px; transition: width .4s; }
+.confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; background: #fff7e6;
+  border-radius: 10px; padding: 8px 10px; margin: 8px 0 4px; }
+.next-bar { position: sticky; top: 72px; z-index: 5; background: var(--bg); padding: 8px 0 12px; }
+.listcard { display: block; margin: 0; text-decoration: none; color: inherit; border: 1.5px solid var(--line);
+  box-shadow: none; cursor: pointer; }
+.rem { padding: 10px 0; border-bottom: 1px solid var(--line); }
+[hidden] { display: none !important; }
+@media (max-width: 420px) { .cust .grid { grid-template-columns: 1fr; } .stats.four { grid-template-columns: repeat(2, 1fr); } }
+</style>
+{% endblock %}
+{% block main %}
+<noscript><div class="alert error">Please turn on JavaScript - the list is kept on this phone.</div></noscript>
+<div class="alert error" id="loginagain" hidden>Please <a href="/login">log in again</a> - your lists on this phone are safe.<br>
+<span class="hi">कृपया फिर से लॉग इन करें - आपकी सूचियाँ इसी फ़ोन में सुरक्षित हैं।</span></div>
+<div id="app"></div>
+
+<script>
+(function () {
+'use strict';
+var CSRF = {{ csrf | tojson }};
+var CSP = {{ user.csp_code | tojson }};
+var RETENTION_DAYS = {{ retention_days | int }};
+var FOLLOWUP_DAYS = {{ followup_days | int }};
+var MAX_FOLLOWUPS = {{ max_followups | int }};
+var KEY = 'grahak-sampark:v1:' + CSP;
+var REPEAT_SHARE = 0.8;
+var app = document.getElementById('app');
+
+// ---------- storage: lists live ONLY in this phone's browser (DPDP) ----------
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || {lists: []}; }
+  catch (e) { return {lists: []}; }
+}
+var db = load();
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); return true; }
+  catch (e) { alert('Phone storage is full - delete an old list. / फ़ोन में जगह नहीं - पुरानी सूची हटाएं।'); return false; }
+}
+function findList(id) { return db.lists.filter(function (l) { return l.id === id; })[0]; }
+function newId() {
+  var a = new Uint8Array(12); (window.crypto || window.msCrypto).getRandomValues(a);
+  return Array.prototype.map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
+}
+function nowIso() { return new Date().toISOString(); }
+function daysSince(iso) { return (Date.now() - new Date(iso).getTime()) / 86400000; }
+function when(iso) {
+  try { return new Date(iso).toLocaleString('en-IN', {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'}); }
+  catch (e) { return iso; }
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]; });
+}
+
+// ---------- server calls (the server keeps nothing) ----------
+function api(url, opts) {
+  opts = opts || {};
+  opts.credentials = 'same-origin';
+  opts.cache = 'no-store';
+  opts.headers = opts.headers || {};
+  opts.headers['X-CSRF-Token'] = CSRF;
+  if (opts.json !== undefined) {
+    opts.method = opts.method || 'POST';
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(opts.json);
+  }
+  return fetch(url, opts).then(function (r) {
+    return r.json().catch(function () { return {}; }).then(function (d) {
+      if (r.status === 401) document.getElementById('loginagain').hidden = false;
+      if (!r.ok) throw new Error(d.error || 'Something went wrong - please try again');
+      return d;
+    });
+  });
+}
+function check(rows) { return api('/api/check', {json: {rows: rows}}); }
+
+// counts only - no names or numbers - for the super admin's dashboard
+function sendStats(list, event) {
+  var c = counts(list);
+  api('/api/stats', {json: {list_id: list.id, event: event || '', counts: c}}).catch(function () {});
+}
+function counts(list) {
+  var k = list.checked ? list.checked.counts : {};
+  var s = {sent: 0, not_on_wa: 0, stopped: k.stopped || 0, came: 0, reminders: 0};
+  Object.keys(list.sends || {}).forEach(function (m) {
+    var x = list.sends[m];
+    if (x.status === 'sent') s.sent++;
+    if (x.status === 'failed') s.not_on_wa++;
+    if (x.status === 'skipped') s.stopped++;
+    if (x.came) s.came++;
+    s.reminders += x.followups || 0;
+  });
+  // customers = different account numbers (a customer printed twice counts once)
+  var unique = {};
+  ((list.checked && list.checked.rows) || []).forEach(function (r) { if (r.account) unique[r.account] = 1; });
+  return {pages: list.pages || 1, customers: Object.keys(unique).length, to_fix: k.to_fix || 0, no_mobile: k.no_mobile || 0,
+          messages: k.messages || 0, sent: s.sent, not_on_wa: s.not_on_wa, stopped: s.stopped,
+          came: s.came, reminders: s.reminders, repeat: list.repeat_of ? 1 : 0, deleted: list.deleted ? 1 : 0};
+}
+
+// same list uploaded before on this phone? (by account numbers)
+function findRepeat(list) {
+  var mine = accounts(list);
+  if (!mine.length) return null;
+  var earlier = db.lists.filter(function (l) { return l.id !== list.id && l.created < list.created; });
+  for (var i = 0; i < earlier.length; i++) {
+    var theirs = {}; accounts(earlier[i]).forEach(function (a) { theirs[a] = 1; });
+    var same = mine.filter(function (a) { return theirs[a]; }).length;
+    if (same >= REPEAT_SHARE * mine.length) return earlier[i].id;
+  }
+  return null;
+}
+function accounts(list) {
+  return (list.rows || []).map(function (r) { return String(r.account || '').replace(/\D/g, ''); })
+    .filter(function (a) { return a; });
+}
+
+// lists older than the retention period are deleted from this phone (DPDP)
+function purgeOld() {
+  var keep = [];
+  db.lists.forEach(function (l) {
+    if (daysSince(l.created) > RETENTION_DAYS) { l.deleted = true; sendStats(l, 'list_deleted'); }
+    else keep.push(l);
+  });
+  if (keep.length !== db.lists.length) { db.lists = keep; save(); }
+}
+
+// ---------- reading a photo / Excel ----------
+var reading = null;   // {token, listId, started}
+function startPhoto(file, listId) {
+  var fd = new FormData();
+  fd.append('photo', file); fd.append('csrf', CSRF);
+  showReading({listId: listId, started: Date.now(), uploading: true});
+  api('/api/read', {method: 'POST', body: fd}).then(function (d) {
+    reading = {token: d.token, listId: listId, started: Date.now()};
+    try { sessionStorage.setItem(KEY + ':reading', JSON.stringify(reading)); } catch (e) {}
+    showReading(reading); poll();
+  }).catch(function (e) { readFailed(e.message, listId); });
+}
+function startSheet(file) {
+  var fd = new FormData();
+  fd.append('sheet', file); fd.append('csrf', CSRF);
+  showReading({started: Date.now(), uploading: true});
+  api('/api/read-sheet', {method: 'POST', body: fd})
+    .then(function (d) { return gotRows(d.rows, d.info, null); })
+    .catch(function (e) { readFailed(e.message, null); });
+}
+function poll() {
+  if (!reading) return;
+  api('/api/read/' + encodeURIComponent(reading.token)).then(function (s) {
+    if (!reading) return;
+    if (s.stage === 'done') {
+      return api('/api/read/' + encodeURIComponent(reading.token) + '/take', {method: 'POST'})
+        .then(function (d) { var r = reading; clearReading(); return gotRows(d.rows, d.info, r.listId); });
+    }
+    if (s.stage === 'failed' || s.stage === 'gone') { var id = reading.listId; clearReading(); return readFailed(s.error, id); }
+    var a = document.getElementById('ahead');
+    if (a) { a.hidden = !s.ahead; a.querySelector('b').textContent = s.ahead; }
+    setTimeout(poll, 2000);
+  }).catch(function (e) { setTimeout(poll, 4000); });
+}
+function clearReading() {
+  reading = null;
+  try { sessionStorage.removeItem(KEY + ':reading'); } catch (e) {}
+}
+function cancelReading() {
+  if (reading) api('/api/read/' + encodeURIComponent(reading.token) + '/cancel', {method: 'POST'}).catch(function () {});
+  var id = reading && reading.listId; clearReading();
+  location.hash = id ? '#l=' + id : '';
+  render();
+}
+function gotRows(rows, info, listId) {
+  var list = listId && findList(listId);
+  if (list) {
+    list.rows = (list.rows || []).concat(rows);
+    list.pages = (list.pages || 1) + 1;
+  } else {
+    list = {id: newId(), created: nowIso(), pages: 1, rows: rows, sends: {}, stage: 'check',
+            source: info && info.source || 'photo'};
+    db.lists.unshift(list);
+  }
+  list.skipped_operative = (list.skipped_operative || 0) + (info && info.skipped_operative || 0);
+  list.saved = false;
+  list.page_error = null;
+  return check(list.rows).then(function (c) {
+    list.checked = c;
+    list.repeat_of = findRepeat(list);
+    if (save()) sendStats(list, 'list_saved');
+    location.hash = '#l=' + list.id;
+    render();
+  });
+}
+function readFailed(message, listId) {
+  var list = listId && findList(listId);
+  if (list) { list.page_error = message; save(); location.hash = '#l=' + list.id; render(); return; }
+  app.innerHTML = '<div class="card"><h1>Could not read the photo 😕</h1>' +
+    '<div class="alert error">' + esc(message) + '</div>' +
+    '<p class="lead">Please take a new photo: paper flat, good light, column names visible.<br>' +
+    '<span class="hi">कृपया नई फोटो लें: कागज़ सीधा, अच्छी रोशनी, कॉलम के नाम दिखें।</span></p>' +
+    '<button class="btn big" type="button" id="again">📷 Take new photo / नई फोटो</button></div>';
+  document.getElementById('again').onclick = function () { location.hash = ''; render(); };
+}
+var timer = null;
+function showReading(r) {
+  clearInterval(timer);
+  app.innerHTML = '<div class="card" style="text-align:center"><div style="font-size:48px">📄🔍</div>' +
+    '<h1>' + (r.uploading ? 'Uploading…' : 'Reading your list…') + '</h1>' +
+    '<p class="lead">The list is read twice to be sure - about 40 seconds. Keep this page open.<br>' +
+    '<span class="hi">पक्का करने के लिए सूची दो बार पढ़ी जाती है - लगभग 40 सेकंड। यह पेज खुला रखें।</span></p>' +
+    '<p class="muted" style="margin:0">⏱ <span id="waited">0</span> seconds</p>' +
+    '<div class="alert info" id="ahead" style="margin:16px 0 0" hidden><b>0</b> list(s) ahead of yours - yours starts right after.<br>' +
+    '<span class="hi">आपसे पहले सूची पढ़ी जा रही है - उसके बाद आपकी।</span></div>' +
+    '<div id="slow" hidden><div class="alert warn" style="margin:16px 0 0;text-align:left">Taking longer than usual - the photo may be unclear. ' +
+    'You can wait, or take a new clear photo.<br><span class="hi">ज़्यादा समय लग रहा है - रुकें या नई साफ़ फोटो लें।</span></div>' +
+    '<button class="btn big" type="button" id="cancelread" style="margin-top:14px">📷 Cancel and take a new photo / नई फोटो लें</button></div></div>';
+  document.getElementById('cancelread').onclick = cancelReading;
+  timer = setInterval(function () {
+    var el = document.getElementById('waited');
+    if (!el) { clearInterval(timer); return; }
+    var n = Math.round((Date.now() - r.started) / 1000);
+    el.textContent = n;
+    document.getElementById('slow').hidden = n < 60 || r.uploading;
+  }, 1000);
+}
+function pickFile(accept, capture, onFile) {
+  var input = document.createElement('input');
+  input.type = 'file'; input.accept = accept;
+  if (capture) input.setAttribute('capture', 'environment');
+  input.onchange = function () { if (input.files.length) onFile(input.files[0]); };
+  input.click();
+}
+
+// ---------- home ----------
+function steps(n) {
+  var names = [['Upload', 'फोटो'], ['Check', 'जाँचें'], ['Send', 'भेजें']];
+  return '<ol class="steps">' + names.map(function (s, i) {
+    var cls = i + 1 < n ? 'done' : (i + 1 === n ? 'on' : '');
+    return '<li class="' + cls + '"><b>' + (i + 1 < n ? '✓' : i + 1) + '</b>' + s[0] + '<br><span class="hi">' + s[1] + '</span></li>';
+  }).join('') + '</ol>';
+}
+function remindersDue() {
+  var due = [];
+  db.lists.forEach(function (l) {
+    if (l.repeat_of || !l.checked) return;
+    l.checked.groups.forEach(function (g) {
+      var x = l.sends[g.mobile];
+      if (!x || x.status !== 'sent' || x.came || (x.followups || 0) >= MAX_FOLLOWUPS || !x.sent_at) return;
+      if (daysSince(x.last_followup_at || x.sent_at) >= FOLLOWUP_DAYS) due.push({list: l, group: g});
+    });
+  });
+  return due;
+}
+function home() {
+  var total = {sent: 0, came: 0, call: 0};
+  db.lists.forEach(function (l) {
+    var c = counts(l);
+    if (!l.repeat_of) { total.sent += c.sent; total.came += c.came; total.call += c.not_on_wa + (c.no_mobile || 0); }
+  });
+  var due = remindersDue();
+  var h = steps(1) +
+    '<div class="card"><h1>Upload inoperative account list</h1>' +
+    '<p class="lead">Take a clear photo of the list SBI gave you. Many pages? Start with page 1 - you can add the other pages on the next screen.<br>' +
+    '<span class="hi">SBI से मिली सूची की साफ़ फोटो लें। कई पेज हैं? पहले पेज 1, बाकी अगली स्क्रीन पर जोड़ें।</span></p>' +
+    '<button class="btn big" type="button" id="cam">📷 Take photo now / अभी फोटो लें</button>' +
+    '<button class="btn big ghost" type="button" id="gal" style="margin-top:12px">🖼 Choose from gallery / गैलरी से चुनें</button>' +
+    '<button class="btn big ghost" type="button" id="xls" style="margin-top:12px">📊 Upload Excel file / एक्सेल फ़ाइल</button>' +
+    '<p class="muted" style="font-size:14px;margin:10px 0 0">🔒 Your lists are kept <b>only on this phone</b> - not on any server (DPDP). ' +
+    'Use the same phone and browser; don\'t clear browser data.<br>' +
+    '<span class="hi">आपकी सूचियाँ सिर्फ़ इसी फ़ोन में रहती हैं - किसी सर्वर पर नहीं। यही फ़ोन इस्तेमाल करें, ब्राउज़र का डेटा न मिटाएं।</span></p>' +
+    '<p style="margin:14px 0 0"><a href="/guide">📘 CSP गाइड / How to use (5 steps)</a></p>' +
+    '<details style="margin-top:16px"><summary style="cursor:pointer;font-weight:600">Tips for a good photo / अच्छी फोटो के लिए</summary>' +
+    '<ul class="muted" style="margin:10px 0 0;padding-left:20px">' +
+    '<li>Keep the paper flat, in good light, no shadow <span class="hi">— कागज़ सीधा, रोशनी अच्छी, छाया नहीं</span></li>' +
+    '<li>Hold the phone still; tap the screen to focus <span class="hi">— फोन हिलाएं नहीं, स्क्रीन पर टैप करके फोकस करें</span></li>' +
+    '<li>Use the camera photo, not one forwarded on WhatsApp <span class="hi">— WhatsApp से आई फोटो नहीं, कैमरे वाली फोटो</span></li>' +
+    '<li>Column names (AcNo, Name, Mobile) must be in the photo <span class="hi">— कॉलम के नाम फोटो में दिखें</span></li>' +
+    '<li>One page per photo <span class="hi">— एक फोटो में एक पेज</span></li></ul></details></div>';
+  if (db.lists.length) {
+    h += '<div class="card"><h2>My work so far <span class="hi">/ अब तक का काम</span></h2><div class="stats four">' +
+      '<div class="stat"><b>' + total.sent + '</b>Messages sent<br><span class="hi">संदेश भेजे</span></div>' +
+      '<div class="stat green"><b>' + total.came + '</b>Came<br><span class="hi">आए</span></div>' +
+      '<div class="stat amber"><b>' + due.length + '</b>Reminders due<br><span class="hi">याद दिलाना</span></div>' +
+      '<div class="stat red"><b>' + total.call + '</b>To call / visit<br><span class="hi">फ़ोन / मिलें</span></div></div></div>';
+  }
+  if (due.length) {
+    h += '<div class="card" id="reminders"><h2>🔔 Reminders due <span class="hi">/ याद दिलाना है</span></h2>' +
+      '<p class="muted" style="margin-top:0">These customers haven\'t come ' + FOLLOWUP_DAYS + ' days after the message. Tap to remind from your WhatsApp. If they came, tap ✅ Came.<br>' +
+      '<span class="hi">ये ग्राहक अभी नहीं आए। WhatsApp से याद दिलाएं, या आ गए हों तो ✅ दबाएं।</span></p>' +
+      due.map(function (d, i) {
+        return '<div class="rem row-between" id="rem-' + i + '"><div><b>' + esc(d.group.greeting) + '</b> · ' + esc(d.group.mobile) +
+          '<br><span class="muted" style="font-size:14px">Account XXXX' + esc(d.group.accounts_last4.join(', XXXX')) + '</span></div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn green small" target="_blank" rel="noopener" href="' + esc(d.group.reminder_link) +
+          '" data-rem="' + i + '">📲 Remind</a><button class="btn ghost small" type="button" data-came="' + i + '">✅ Came</button></div></div>';
+      }).join('') + '</div>';
+  }
+  h += '<div class="card"><h2>My lists <span class="hi">/ मेरी सूचियाँ</span></h2>';
+  if (!db.lists.length) {
+    h += '<p class="muted" style="margin:0">No lists yet. Upload your first list above.<br><span class="hi">अभी कोई सूची नहीं है।</span></p>';
+  } else {
+    h += '<div class="stack">' + db.lists.map(function (l) {
+      var k = l.checked ? l.checked.counts : {};
+      var st = l.stage === 'done' ? ['Messages sent / संदेश भेजे गए', 'green'] :
+               l.stage === 'sending' ? ['Sending / भेजा जा रहा है', 'blue'] :
+               (l.saved && !k.to_fix) ? ['Ready to send / भेजने के लिए तैयार', 'green'] : ['Check the list / सूची जाँचें', 'amber'];
+      return '<div class="card listcard" data-open="' + l.id + '"><div class="row-between"><div><b>' + esc(when(l.created)) + '</b><br>' +
+        '<span class="muted">' + ((l.pages || 1) > 1 ? l.pages + ' pages · ' : '') + (k.rows || 0) + ' customers' +
+        (k.to_fix ? ' · ' + k.to_fix + ' to fix' : '') + '</span></div><span>' +
+        (l.repeat_of ? '<span class="pill amber">Repeat / दोबारा</span> ' : '') +
+        '<span class="pill ' + st[1] + '">' + st[0] + '</span></span></div></div>';
+    }).join('') + '</div>';
+  }
+  h += '</div>';
+  app.innerHTML = h;
+  document.getElementById('cam').onclick = function () { pickFile('image/*', true, function (f) { startPhoto(f, null); }); };
+  document.getElementById('gal').onclick = function () { pickFile('image/*', false, function (f) { startPhoto(f, null); }); };
+  document.getElementById('xls').onclick = function () {
+    pickFile('.xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv', false, startSheet); };
+  Array.prototype.forEach.call(app.querySelectorAll('[data-open]'), function (el) {
+    el.onclick = function () { location.hash = '#l=' + el.dataset.open; };
+  });
+  Array.prototype.forEach.call(app.querySelectorAll('[data-rem]'), function (el) {
+    el.addEventListener('click', function () {
+      var d = due[+el.dataset.rem], x = d.list.sends[d.group.mobile];
+      x.followups = (x.followups || 0) + 1; x.last_followup_at = nowIso();
+      save(); sendStats(d.list); document.getElementById('rem-' + el.dataset.rem).style.opacity = .35;
+    });
+  });
+  Array.prototype.forEach.call(app.querySelectorAll('[data-came]'), function (el) {
+    el.onclick = function () {
+      var d = due[+el.dataset.came];
+      d.list.sends[d.group.mobile].came = nowIso();
+      save(); sendStats(d.list); render();
+    };
+  });
+}
+
+// ---------- one list: check, then send ----------
+function listView(list) {
+  var k = list.checked.counts, rows = list.checked.rows;
+  var ready = list.saved && !k.to_fix;
+  var sending = list.stage === 'sending' || list.stage === 'done';
+  var h = steps(sending ? (list.stage === 'done' ? 4 : 3) : (ready ? 3 : 2)) +
+    '<p style="margin:0 0 12px"><a href="#" id="back">← My lists / मेरी सूचियाँ</a></p>';
+  if (list.repeat_of) {
+    var e = findList(list.repeat_of);
+    h += '<div class="alert warn">⚠ <b>This list was already uploaded</b>' + (e ? ' on ' + esc(when(e.created)) : '') +
+      '. Use that list - don\'t message the same customers twice. You can delete this one below.<br>' +
+      '<span class="hi">यह सूची पहले ही डाली जा चुकी है। वही सूची इस्तेमाल करें - एक ग्राहक को दो बार संदेश न भेजें।</span></div>';
+  }
+  if (sending) {
+    app.innerHTML = h + sendView(list);
+    wireSend(list);
+  } else {
+    app.innerHTML = h + checkView(list);
+    wireCheck(list);
+  }
+  document.getElementById('back').onclick = function (ev) { ev.preventDefault(); location.hash = ''; };
+}
+
+function checkView(list) {
+  var k = list.checked.counts, rows = list.checked.rows;
+  var h = '';
+  if (list.just_saved) {
+    h += k.to_fix
+      ? '<div class="alert warn" id="saved">Saved ✓ - but <b>' + k.to_fix + ' red row(s)</b> still need fixing before you can send. Fix them (or tick Remove) and press Save again.<br>' +
+        '<span class="hi">सेव हो गया - पर ' + k.to_fix + ' लाल लाइन(ें) ठीक करनी हैं, फिर दोबारा सेव करें।</span></div>'
+      : '<div class="alert ok" id="saved">Saved ✓ - the list is ready. Now send the messages below.<br>' +
+        '<span class="hi">सेव हो गया - अब नीचे से संदेश भेजें।</span><br><a class="btn green" href="#" id="gosend">📲 Go to Send / भेजने पर जाएं ↓</a></div>';
+  }
+  if (list.source === 'sheet') h += '<div class="alert ok">📊 Read from the Excel file - every number is exact. <span class="hi">एक्सेल फ़ाइल से पढ़ा गया।</span></div>';
+  if (list.skipped_operative) h += '<div class="alert info">' + list.skipped_operative + ' account(s) on the list are <b>OPERATIVE</b> (already active) - skipped, they get no message.<br>' +
+    '<span class="hi">' + list.skipped_operative + ' खाते चालू हैं - इन्हें संदेश नहीं जाएगा।</span></div>';
+  if (list.page_error) h += '<div class="alert error">The new page could not be read: ' + esc(list.page_error) + '<br><span class="hi">पेज नहीं पढ़ा गया - दोबारा फोटो लें।</span> The rest of the list is safe.</div>';
+  h += '<div class="card"><div class="row-between"><div><h2 style="margin:0">📄 ' + (list.pages || 1) + ' page' + ((list.pages || 1) > 1 ? 's' : '') + ' · ' + k.rows + ' customers</h2>' +
+    '<p class="muted" style="margin:4px 0 0">More pages in this list? Add them here - all customers stay in one list.<br><span class="hi">सूची में और पेज हैं? यहाँ जोड़ें।</span></p></div></div>' +
+    '<div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap"><button class="btn" type="button" id="pcam">📷 Next page photo / अगला पेज</button>' +
+    '<button class="btn ghost" type="button" id="pgal">🖼 From gallery</button></div></div>';
+  h += '<div class="card"><h1>Check the customer list</h1><p class="lead">Compare with your paper. Fix anything in red, then press <b>Save</b>.<br>' +
+    '<span class="hi">कागज़ से मिलाएं। लाल वाली लाइनें ठीक करें, फिर "सेव" दबाएं।</span></p><div class="stats">' +
+    '<div class="stat"><b>' + k.rows + '</b>Customers<br><span class="hi">ग्राहक</span></div>' +
+    '<div class="stat green"><b>' + k.ok + '</b>OK<br><span class="hi">सही</span></div>' +
+    '<div class="stat ' + (k.to_fix ? 'red' : 'green') + '"><b>' + k.to_fix + '</b>To fix<br><span class="hi">ठीक करें</span></div></div>';
+  if (k.no_mobile) h += '<div class="alert warn" style="margin:12px 0 0">📞 ' + k.no_mobile + ' customer(s) have no mobile number on the list - please call or visit them, or type the number in if you have it.<br>' +
+    '<span class="hi">' + k.no_mobile + ' ग्राहकों का मोबाइल नंबर नहीं है - उन्हें फ़ोन करें या मिलें।</span></div>';
+  if (k.stopped) h += '<div class="alert info" style="margin:12px 0 0">' + k.stopped + ' customer(s) said STOP earlier - they get no message.<br><span class="hi">' + k.stopped + ' ग्राहकों ने पहले मना किया था - उन्हें संदेश नहीं जाएगा।</span></div>';
+  if (k.to_fix) h += '<label style="display:flex;gap:8px;align-items:center;margin-top:16px;font-weight:600"><input type="checkbox" id="onlybad" style="width:22px;height:22px"> Show only rows to fix / सिर्फ़ गलत लाइनें दिखाएं</label>';
+  h += '</div><form id="rows"><div class="card stack" id="rowlist">' + list.checked.rows.map(function (r, i) {
+    var cls = r.ok ? '' : (r.problems.length ? 'bad' : (r.stopped ? 'stop' : 'nomob'));
+    var pill = r.ok ? '<span class="pill green">OK ✓</span>' : r.problems.length ? '<span class="pill red">Fix / ठीक करें</span>' :
+      r.stopped ? '<span class="pill blue">Said STOP earlier / मना किया था</span>' : '<span class="pill amber">📞 No mobile - call / visit</span>';
+    return '<div class="cust ' + cls + '"><div class="head"><span class="num">#' + (i + 1) + '</span>' + pill +
+      '<label class="del"><input type="checkbox" data-del="' + i + '"> Remove / हटाएं</label></div><div class="grid">' +
+      '<div class="full"><label>Name / नाम</label><input type="text" data-f="name" data-i="' + i + '" value="' + esc(r.name) + '"></div>' +
+      '<div><label>Mobile / मोबाइल</label><input type="tel" data-f="mobile" data-i="' + i + '" value="' + esc(r.mobile) + '" inputmode="numeric" maxlength="13"></div>' +
+      '<div><label>Account No. / खाता संख्या</label><input type="text" data-f="account" data-i="' + i + '" value="' + esc(r.account) + '" inputmode="numeric" maxlength="17"></div></div>' +
+      (r.problems.length ? '<div class="problems">⚠ ' + esc(r.problems.join(' · ')) + '</div>' : '') + '</div>';
+  }).join('') +
+    '<div class="cust"><div class="head"><span class="num">+</span><span class="muted">Missed a customer? Add here / छूटा ग्राहक यहाँ जोड़ें</span></div><div class="grid">' +
+    '<div class="full"><label>Name / नाम</label><input type="text" data-f="name" data-i="new"></div>' +
+    '<div><label>Mobile / मोबाइल</label><input type="tel" data-f="mobile" data-i="new" inputmode="numeric" maxlength="13"></div>' +
+    '<div><label>Account No. / खाता संख्या</label><input type="text" data-f="account" data-i="new" inputmode="numeric" maxlength="17"></div></div></div>' +
+    '</div><div class="sticky"><button class="btn big" type="submit" id="savebtn">💾 Save / सेव करें</button></div></form>';
+  var g = list.checked.groups;
+  h += '<div class="card"><h2>Message customers will get <span class="hi">/ ग्राहक को जाने वाला संदेश</span></h2>' +
+    (g.length ? '<p class="muted" style="margin-top:0">Example for the first customer. Only the last 4 digits of the account are shown. <span class="hi">खाते के सिर्फ़ आखिरी 4 अंक दिखेंगे।</span></p><div class="preview">' + esc(g[0].message) + '</div>'
+              : '<p class="muted">No customers ready yet. Fix the rows above first.</p>') + '</div>';
+  var ready = list.saved && !k.to_fix;
+  h += '<div class="card" id="send"><h2>Send on WhatsApp <span class="hi">/ WhatsApp पर भेजें</span></h2>' +
+    (k.to_fix ? '<div class="alert warn">Fix the ' + k.to_fix + ' red row(s) and save before sending.<br><span class="hi">भेजने से पहले लाल लाइनें ठीक करके सेव करें।</span></div>'
+              : (!list.saved ? '<div class="alert info">Check the list and press Save first. / पहले सूची जाँचकर सेव करें।</div>' : '')) +
+    '<p style="margin-top:0"><b>' + g.length + '</b> WhatsApp messages will go to <b>' + k.ok + '</b> customers' +
+    (g.length < k.ok ? ' (some customers share a mobile number, they get one message)' : '') + '.</p>' +
+    '<label style="display:flex;gap:10px;align-items:flex-start;font-weight:600;margin:0 0 14px"><input type="checkbox" id="paper" style="width:24px;height:24px;flex:none" ' + (ready ? '' : 'disabled') + '>' +
+    '<span>I have matched every mobile number with the paper list.<br><span class="hi">मैंने हर मोबाइल नंबर कागज़ से मिला लिया है।</span></span></label>' +
+    '<button class="btn big green" type="button" id="startsend" ' + (ready && g.length ? '' : 'disabled') + '>📲 Send from my WhatsApp / अपने WhatsApp से भेजें</button></div>';
+  h += '<div class="card"><button class="btn danger" type="button" id="dellist">🗑 Delete this list from this phone / यह सूची हटाएं</button></div>';
+  return h;
+}
+
+function wireCheck(list) {
+  document.getElementById('pcam').onclick = function () { pickFile('image/*', true, function (f) { startPhoto(f, list.id); }); };
+  document.getElementById('pgal').onclick = function () { pickFile('image/*', false, function (f) { startPhoto(f, list.id); }); };
+  var only = document.getElementById('onlybad');
+  if (only) only.onchange = function () { document.getElementById('rowlist').classList.toggle('only-bad', only.checked); };
+  var go = document.getElementById('gosend');
+  if (go) go.onclick = function (ev) { ev.preventDefault(); document.getElementById('send').scrollIntoView({behavior: 'smooth'}); };
+  document.getElementById('rows').onsubmit = function (ev) {
+    ev.preventDefault();
+    var btn = document.getElementById('savebtn'); btn.disabled = true; btn.textContent = 'Saving… / सेव हो रहा है…';
+    var edited = [];
+    list.checked.rows.forEach(function (r, i) {
+      if (app.querySelector('[data-del="' + i + '"]').checked) return;
+      var row = {};
+      ['name', 'mobile', 'account'].forEach(function (f) { row[f] = app.querySelector('[data-f="' + f + '"][data-i="' + i + '"]').value.trim(); });
+      if (row.name || row.mobile || row.account) edited.push(row);
+    });
+    var extra = {};
+    ['name', 'mobile', 'account'].forEach(function (f) { extra[f] = app.querySelector('[data-f="' + f + '"][data-i="new"]').value.trim(); });
+    if (extra.name || extra.mobile || extra.account) edited.push(extra);
+    check(edited).then(function (c) {
+      list.rows = edited; list.checked = c; list.saved = true; list.just_saved = true;
+      list.repeat_of = findRepeat(list);
+      if (save()) sendStats(list, 'list_saved');
+      render();
+      var el = document.getElementById('saved'); if (el) el.scrollIntoView();
+      list.just_saved = false;
+    }).catch(function (e) { alert(e.message); btn.disabled = false; btn.textContent = '💾 Save / सेव करें'; });
+  };
+  document.getElementById('startsend').onclick = function () {
+    if (!document.getElementById('paper').checked) {
+      alert('Please tick that you matched the mobile numbers with the paper. / कृपया टिक करें कि आपने नंबर कागज़ से मिला लिए।');
+      return;
+    }
+    list.stage = 'sending'; list.send_started = nowIso();
+    list.checked.groups.forEach(function (g) { if (!list.sends[g.mobile]) list.sends[g.mobile] = {status: 'pending'}; });
+    if (save()) sendStats(list, 'sending_started');
+    render(); window.scrollTo(0, 0);
+  };
+  document.getElementById('dellist').onclick = function () { deleteList(list); };
+}
+
+function deleteList(list) {
+  if (!confirm('Delete this list from this phone? This cannot be undone. / यह सूची हटाएं? वापस नहीं आएगी।')) return;
+  db.lists = db.lists.filter(function (l) { return l.id !== list.id; });
+  list.deleted = true;
+  save(); sendStats(list, 'list_deleted');
+  location.hash = '';
+}
+
+var LABEL = {sent: 'Sent ✓', opened: 'Opened - did it go?', pending: 'To send', failed: 'Not on WhatsApp', skipped: 'Said STOP'};
+var COLOUR = {sent: 'green', opened: 'amber', pending: 'blue', failed: 'red', skipped: 'amber'};
+function sendView(list) {
+  var groups = list.checked.groups;
+  var c = counts(list), left = groups.filter(function (g) { var s = (list.sends[g.mobile] || {}).status; return !s || s === 'pending' || s === 'opened'; }).length;
+  var done = groups.length - left;
+  var h = '<div class="card" id="wa-top">' + (list.stage === 'done'
+    ? '<div style="font-size:44px">✅</div><h1>Done / हो गया</h1><p class="lead">Customers will now visit you with KYC. Mark them ✅ when they come.<br><span class="hi">ग्राहक KYC लेकर आपके पास आएंगे। आने पर ✅ दबाएं।</span></p>'
+    : '<h1>Send from your WhatsApp / अपने WhatsApp से भेजें</h1><ol class="muted" style="margin:0 0 6px;padding-left:20px">' +
+      '<li>Tap <b>📲 WhatsApp</b> on a customer. <span class="hi">ग्राहक पर 📲 दबाएं।</span></li>' +
+      '<li>WhatsApp opens with the message ready - press <b>Send</b> there. <span class="hi">वहाँ Send दबाएं।</span></li>' +
+      '<li>Come back here and answer "Did it go?". <span class="hi">वापस आकर "संदेश गया?" बताएं।</span></li></ol>') +
+    '<div class="bar"><div style="width:' + (groups.length ? Math.round(100 * done / groups.length) : 0) + '%"></div></div>' +
+    '<p class="muted" style="margin:0 0 14px">' + done + ' of ' + groups.length + ' done / ' + groups.length + ' में से ' + done + '</p>' +
+    '<div class="stats four"><div class="stat green"><b>' + c.sent + '</b>Sent<br><span class="hi">भेजे</span></div>' +
+    '<div class="stat"><b>' + c.not_on_wa + '</b>Not on WhatsApp<br><span class="hi">WhatsApp नहीं</span></div>' +
+    '<div class="stat"><b>' + c.stopped + '</b>Said STOP<br><span class="hi">मना किया</span></div>' +
+    '<div class="stat green"><b>' + c.came + '</b>Came<br><span class="hi">आए</span></div></div></div>';
+  if (list.stage === 'sending') {
+    h += '<div class="next-bar"><a id="nextbtn" class="btn big green" target="_blank" rel="noopener">📲 Next customer</a>' +
+      '<p class="muted" style="margin:6px 0 0;text-align:center;font-size:14px">Tap → press Send in WhatsApp → come back → answer "Did it go?" → next.<br>' +
+      '<span class="hi">दबाएं → WhatsApp में Send → वापस आएं → "संदेश गया?" बताएं → अगला।</span></p></div>';
+  }
+  h += '<div class="card stack">' + groups.map(function (g, i) {
+    var x = list.sends[g.mobile] || {status: 'pending'};
+    return '<div class="cust" id="wa-' + i + '"><div class="head"><span><b>' + esc(g.greeting) + '</b> · ' + esc(g.mobile) + '</span>' +
+      '<span class="pill ' + COLOUR[x.status] + '">' + LABEL[x.status] + '</span></div>' +
+      '<div class="muted" style="font-size:14px;margin:4px 0 10px">Account XXXX' + esc(g.accounts_last4.join(', XXXX')) + '</div>' +
+      (x.status === 'opened' ? '<div class="confirm"><b>Did the message go? / संदेश गया?</b>' +
+        '<button class="btn green small" type="button" data-mark="sent" data-i="' + i + '">✅ Yes, sent / हाँ</button>' +
+        '<button class="btn ghost small" type="button" data-mark="pending" data-i="' + i + '">❌ No / नहीं</button></div>' : '') +
+      '<div class="row-between"><a class="btn green" href="' + esc(g.link) + '" target="_blank" rel="noopener" data-open-wa="' + i + '" style="flex:1">📲 WhatsApp</a>' +
+      '<button class="btn ghost small" type="button" data-mark="failed" data-i="' + i + '">Not on WhatsApp</button>' +
+      '<button class="btn ghost small" type="button" data-mark="skipped" data-i="' + i + '">Said STOP</button>' +
+      (x.status === 'failed' ? '<a class="btn ghost small" href="tel:+91' + esc(g.mobile) + '">📞 Call</a>' : '') + '</div>' +
+      '<div style="margin-top:8px"><button class="btn small ' + (x.came ? 'green' : 'ghost') + '" type="button" data-came="' + i + '">' +
+      (x.came ? '✅ Came / आए' : '✅ Mark as came / आए') + '</button></div></div>';
+  }).join('') + '</div>';
+  if (list.stage === 'sending') h += '<button class="btn big ghost" type="button" id="finish" style="margin:0 0 16px">🏁 Finish - I am done for now / अभी के लिए खत्म</button>';
+  h += '<div class="card"><button class="btn danger" type="button" id="dellist">🗑 Delete this list from this phone / यह सूची हटाएं</button></div>';
+  return h;
+}
+
+var lastOpened = null;
+function wireSend(list) {
+  var groups = list.checked.groups;
+  function mark(i, status) {
+    var g = groups[i], x = list.sends[g.mobile] || (list.sends[g.mobile] = {status: 'pending'});
+    if (status === 'skipped') {
+      if (!confirm('Customer said STOP? They will never be messaged again. / ग्राहक ने मना किया?')) return;
+      api('/api/optout', {json: {mobile: g.mobile}}).catch(function () {});
+    }
+    x.status = status;
+    if (status === 'sent' && !x.sent_at) x.sent_at = nowIso();
+    if (status === 'opened') lastOpened = i;
+    var left = groups.filter(function (g2) { var s = (list.sends[g2.mobile] || {}).status; return !s || s === 'pending' || s === 'opened'; }).length;
+    if (list.stage === 'sending' && !left) list.stage = 'done';
+    save(); sendStats(list);
+    var y = window.scrollY; render(); window.scrollTo(0, y);
+  }
+  Array.prototype.forEach.call(app.querySelectorAll('[data-mark]'), function (b) {
+    b.onclick = function () { mark(+b.dataset.i, b.dataset.mark); };
+  });
+  Array.prototype.forEach.call(app.querySelectorAll('[data-open-wa]'), function (a) {
+    a.addEventListener('click', function () { mark(+a.dataset.openWa, 'opened'); });
+  });
+  Array.prototype.forEach.call(app.querySelectorAll('[data-came]'), function (b) {
+    b.onclick = function () {
+      var x = list.sends[groups[+b.dataset.came].mobile] || (list.sends[groups[+b.dataset.came].mobile] = {status: 'pending'});
+      x.came = x.came ? null : nowIso();
+      save(); sendStats(list); var y = window.scrollY; render(); window.scrollTo(0, y);
+    };
+  });
+  var next = document.getElementById('nextbtn');
+  if (next) {
+    var i = -1;
+    groups.some(function (g, j) { var s = (list.sends[g.mobile] || {}).status; if (!s || s === 'pending') { i = j; return true; } return false; });
+    if (i < 0) { next.textContent = '✅ All customers done / सब हो गया'; next.removeAttribute('href'); next.className = 'btn big ghost'; }
+    else {
+      next.href = groups[i].link;
+      next.textContent = '📲 Next: ' + groups[i].greeting + ' / अगला ग्राहक';
+      next.addEventListener('click', function () { mark(i, 'opened'); });
+    }
+  }
+  var fin = document.getElementById('finish');
+  if (fin) fin.onclick = function () {
+    if (!confirm('Finish now? Customers not sent yet will stay unsent. / अभी खत्म करें?')) return;
+    list.stage = 'done'; save(); sendStats(list); render();
+  };
+  document.getElementById('dellist').onclick = function () { deleteList(list); };
+}
+
+// back from WhatsApp: ask whether the message really went (the app can't see WhatsApp)
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState !== 'visible' || lastOpened === null) return;
+  var i = lastOpened; lastOpened = null;
+  var m = location.hash.match(/^#l=([0-9a-f]+)$/), list = m && findList(m[1]);
+  if (!list || !list.checked) return;
+  var g = list.checked.groups[i], x = g && list.sends[g.mobile];
+  if (!x || x.status !== 'opened') return;
+  setTimeout(function () {
+    var went = confirm('Did the message to ' + g.greeting + ' go? (OK = yes, Cancel = no)\n' + g.greeting + ' को संदेश गया?');
+    x.status = went ? 'sent' : 'pending';
+    if (went && !x.sent_at) x.sent_at = nowIso();
+    var left = list.checked.groups.filter(function (g2) { var s = (list.sends[g2.mobile] || {}).status; return !s || s === 'pending' || s === 'opened'; }).length;
+    if (list.stage === 'sending' && !left) list.stage = 'done';
+    save(); sendStats(list); var y = window.scrollY; render(); window.scrollTo(0, y);
+  }, 300);
+});
+
+// ---------- routing ----------
+function render() {
+  if (reading) { showReading(reading); return; }
+  var m = location.hash.match(/^#l=([0-9a-f]+)$/);
+  var list = m && findList(m[1]);
+  if (list && list.checked) listView(list); else home();
+}
+window.addEventListener('hashchange', function () { render(); window.scrollTo(0, 0); });
+
+purgeOld();
+try {
+  var r = JSON.parse(sessionStorage.getItem(KEY + ':reading'));
+  if (r && r.token) { reading = r; poll(); }
+} catch (e) {}
+render();
+})();
+</script>
+{% endblock %}

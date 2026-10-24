@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block head %}
+<style>
+main { max-width: 1000px; }
+.login-wrap { display: grid; grid-template-columns: 1.05fr .95fr; gap: 22px; align-items: stretch; margin-top: 12px; }
+.intro {
+  border-radius: 22px; color: #fff; padding: 30px 26px; position: relative; overflow: hidden;
+  background: radial-gradient(circle at 90% 10%, rgba(255,255,255,.18), transparent 42%),
+              linear-gradient(140deg, #1374d6 0%, #0b5cab 55%, #062f57 100%);
+  box-shadow: 0 10px 30px rgba(7,61,112,.22);
+}
+.intro img { width: 64px; height: 64px; border-radius: 18px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+.intro h2 { font-size: 26px; margin: 16px 0 6px; line-height: 1.2; }
+.intro p { margin: 0 0 18px; opacity: .92; }
+.intro ol { list-style: none; margin: 0 0 20px; padding: 0; }
+.intro li { display: flex; gap: 12px; align-items: center; margin: 10px 0; font-weight: 600; }
+.intro li span.k { width: 34px; height: 34px; border-radius: 11px; background: rgba(255,255,255,.16);
+  display: grid; place-items: center; font-size: 18px; flex: none; }
+.intro li small { display: block; font-weight: 400; opacity: .8; }
+.intro a.more { color: #fff; font-weight: 700; }
+.login-card { margin: 0; padding: 28px 24px; display: flex; flex-direction: column; justify-content: center; }
+@media (max-width: 760px) {
+  .login-wrap { grid-template-columns: 1fr; }
+  .login-card { order: -1; }      /* on the phone, the login comes first */
+  .intro { padding: 22px 20px; }
+  .intro h2 { font-size: 22px; }
+}
+</style>
+{% endblock %}
+{% block main %}
+<div class="login-wrap">
+  <section class="intro">
+    <img src="/static/icon.svg" alt="">
+    <h2>Reach every inoperative-account customer - from one photo</h2>
+    <p>निष्क्रिय खातों के हर ग्राहक तक - बस एक फोटो से</p>
+    <ol>
+      <li><span class="k">📷</span><div>Photo of the list<small>सूची की फोटो लें</small></div></li>
+      <li><span class="k">🔍</span><div>Agent reads every customer<small>एजेंट हर ग्राहक पढ़ता है</small></div></li>
+      <li><span class="k">✅</span><div>You check against the paper<small>कागज़ से मिलाएं</small></div></li>
+      <li><span class="k">📲</span><div>Message on WhatsApp<small>WhatsApp पर संदेश</small></div></li>
+    </ol>
+    <a class="more" href="/about">See how it works →</a>
+  </section>
+
+  <div class="card login-card">
+    <h1>Welcome 🙏</h1>
+    <p class="lead">Log in with your CSP code<br><span class="hi">अपने CSP कोड से लॉग इन करें</span></p>
+    {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+    {% if info %}<div class="alert info">{{ info }}</div>{% endif %}
+    <form method="post" action="/login" autocomplete="on">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label for="csp_code">CSP Code / Login ID <span class="hi">/ CSP कोड</span></label>
+      <input id="csp_code" name="csp_code" type="text" value="{{ csp_code or '' }}"
+             autocapitalize="characters" autocomplete="username" required autofocus>
+      <label for="password">Password <span class="hi">/ पासवर्ड</span></label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      <div style="margin-top:22px"><button class="btn big" type="submit">Log in / लॉग इन</button></div>
+    </form>
+    <p class="muted" style="margin:18px 0 0;font-size:14px">Forgot password? Please contact your Eko coordinator.<br>
+    <span class="hi">पासवर्ड भूल गए? अपने Eko कोऑर्डिनेटर से संपर्क करें।</span></p>
+    {% if local_reset %}
+    <p style="margin:12px 0 0;font-size:14px"><a href="/reset-admin">Super admin password bhool gaye? (sirf is computer par)</a></p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

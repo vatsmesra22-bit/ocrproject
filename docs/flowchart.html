@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<title>Grahak Sampark - Flowchart</title>
+<style>
+  @page { size: A4; margin: 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", "Nirmala UI", Arial, sans-serif; color: #1f2937; margin: 0; }
+  h1 { text-align: center; color: #0b4f9c; margin: 0 0 2px; font-size: 22px; }
+  .sub { text-align: center; color: #6b7280; font-size: 12px; margin-bottom: 10px; }
+  .flow { display: flex; flex-direction: column; align-items: center; }
+  .box { width: 78%; border-radius: 10px; padding: 7px 12px; text-align: center; font-size: 13px;
+         border: 2px solid #0b4f9c; background: #eef5ff; }
+  .box b { font-size: 14px; }
+  .start { background: #0b4f9c; color: #fff; border-radius: 22px; }
+  .q { background: #fff7e6; border-color: #d97706; }
+  .ocr { background: #f0fdf4; border-color: #16a34a; }
+  .agent { background: #f5f3ff; border-color: #7c3aed; }
+  .arrow { color: #0b4f9c; font-size: 16px; line-height: 16px; margin: 2px 0; }
+  .row { display: flex; gap: 10px; width: 78%; }
+  .row .box { width: 50%; font-size: 12px; }
+  .bad { background: #fef2f2; border-color: #dc2626; }
+  .labels { display: flex; justify-content: center; gap: 8px; margin-top: 4px; font-size: 12px; }
+  .tag { padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .ok { background: #dcfce7; color: #166534; }
+  .err { background: #fee2e2; color: #991b1b; }
+  .nomob { background: #fef3c7; color: #92400e; }
+  .bottom { display: flex; gap: 10px; margin-top: 10px; }
+  .card { flex: 1; border: 1px solid #d1d5db; border-radius: 10px; padding: 7px 12px; font-size: 12px; }
+  .card h3 { margin: 0 0 4px; font-size: 13px; color: #0b4f9c; }
+  .card ul { margin: 0; padding-left: 16px; }
+  .card li { margin: 1px 0; }
+  .foot { text-align: center; font-size: 10px; color: #9ca3af; margin-top: 6px; }
+</style>
+</head>
+<body>
+<h1>Grahak Sampark - ग्राहक संपर्क</h1>
+<div class="sub">Kaise kaam karta hai - flowchart &nbsp;|&nbsp; by Eko Bharat Ventures</div>
+
+<div class="flow">
+  <div class="box start"><b>CSP link kholta hai</b> (phone / laptop)</div>
+  <div class="arrow">▼</div>
+  <div class="box"><b>1. Login</b> - apni CSP ID se</div>
+  <div class="arrow">▼</div>
+  <div class="box"><b>2. Upload</b> - list ki photo ya Excel file</div>
+  <div class="arrow">▼</div>
+  <div class="row">
+    <div class="box q"><b>Photo saaf hai?</b><br>Nahi → "saaf photo lo" → dobara upload</div>
+    <div class="box q"><b>Excel hai?</b><br>Seedha padh liya, OCR nahi chahiye</div>
+  </div>
+  <div class="arrow">▼</div>
+  <div class="box ocr"><b>3. OCR - list padhna</b><br>
+    Pehle <b>Voxomos</b> (internet) &nbsp;→&nbsp; fail ho to <b>RapidOCR</b> (laptop/server par, bina internet)</div>
+  <div class="arrow">▼</div>
+  <div class="box"><b>4. Sirf 3 cheezein rakho:</b> Account + Naam + Mobile<br>
+    baaki sab (gaon, pata, pita ka naam) aur photo - <b>server bhool jaata hai</b>; list <b>sirf CSP ke phone mein</b></div>
+  <div class="arrow">▼</div>
+  <div class="box"><b>5. Har row ka check</b>
+    <div class="labels">
+      <span class="tag ok">✓ OK</span>
+      <span class="tag err">⚠ Galti - naam/number galat, duplicate</span>
+      <span class="tag nomob">☎ Mobile nahi - call / visit</span>
+    </div>
+  </div>
+  <div class="arrow">▼</div>
+  <div class="box"><b>6. CSP paper se milata hai</b> → galti theek → tick → <b>Save</b></div>
+  <div class="arrow">▼</div>
+  <div class="box start"><b>7. WhatsApp</b> - har customer ke aage button → tap → Send<br>(Hindi + English message, CSP ke apne WhatsApp se)</div>
+  <div class="arrow">▼</div>
+  <div class="box agent"><b>8. CSP ka phone (list yahin rehti hai)</b><br>
+    7 din baad reminder &nbsp;•&nbsp; "Aaya" mark &nbsp;•&nbsp; STOP = kabhi message nahi &nbsp;•&nbsp; admin report &nbsp;•&nbsp; 30 din baad phone se delete</div>
+</div>
+
+<div class="bottom">
+  <div class="card">
+    <h3>🔒 DPDP (data suraksha)</h3>
+    <ul>
+      <li>Sirf account, naam, mobile</li>
+      <li>List server par kabhi save nahi - sirf CSP ke phone mein (30 din)</li>
+      <li>Har CSP ko sirf apni list</li>
+      <li>Log mein customer data nahi</li>
+      <li>Voxomos asli list ke liye tabhi: saving band + India server + agreement + naya key</li>
+      <li>App ke andar koi AI (Claude) nahi</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>📍 Kahan chalta hai</h3>
+    <ul>
+      <li><b>Abhi:</b> laptop par (127.0.0.1:8000)</li>
+      <li><b>Aage:</b> India server par HTTPS link - CSP phone se kholega</li>
+    </ul>
+    <h3 style="margin-top:6px">👤 Kaun kya kar sakta hai</h3>
+    <ul>
+      <li><b>CSP:</b> apni list upload, check, send</li>
+      <li><b>Super admin:</b> CSP banana, password reset, report</li>
+    </ul>
+  </div>
+</div>
+<div class="foot">Grahak Sampark · Eko Bharat Ventures</div>
+
+<div style="page-break-before: always"></div>
+<h1>Ab tak kya kaam hua</h1>
+<div class="sub">Grahak Sampark - work done (23 Oct 2026 tak)</div>
+
+<div class="flow">
+  <div class="box ocr"><b>✓ App ban gaya</b> - login, photo/Excel upload, check screen, WhatsApp send, admin page</div>
+  <div class="arrow">▼</div>
+  <div class="box ocr"><b>✓ OCR (photo padhna)</b> - tedhi, ulti, mudi hui photo bhi; naye list formats; galat padhe titles bhi pehchanta hai</div>
+  <div class="arrow">▼</div>
+  <div class="box ocr"><b>✓ Voxomos OCR joda</b> - API key kaam kar rahi hai; naam 38/38; fail ho to RapidOCR apne aap</div>
+  <div class="arrow">▼</div>
+  <div class="box ocr"><b>✓ Galti pakadna</b> - naam zaroori, 11 digit account, 10 digit mobile, duplicate, "paper se milao"</div>
+  <div class="arrow">▼</div>
+  <div class="box ocr"><b>✓ Tez aur stable</b> - ek baar mein ek list, line mein wait + timer, atakne par "nayi photo lo"</div>
+  <div class="arrow">▼</div>
+  <div class="box ocr"><b>✓ List sirf phone mein</b> - server par koi list save nahi; reminder, "aaya", STOP phone se</div>
+  <div class="arrow">▼</div>
+  <div class="box ocr"><b>✓ DPDP</b> - sirf 3 cheezein, photo delete, apni list, masked logs, audit log</div>
+  <div class="arrow">▼</div>
+  <div class="box ocr"><b>✓ Logins</b> - har CSP ki alag ID, super admin, test IDs</div>
+  <div class="arrow">▼</div>
+  <div class="box ocr"><b>✓ Documents</b> - How it works, Data protection, Deployment, Architecture, Tracker, Work log, ye flowchart</div>
+  <div class="arrow">▼</div>
+  <div class="box ocr"><b>✓ Tests</b> - 126 automatic tests pass (sirf banaya hua data)</div>
+</div>
+
+<div class="bottom">
+  <div class="card">
+    <h3>⏳ Aage kya karna hai (isi order mein)</h3>
+    <ul>
+      <li>Laptop par poora test - Save → tick → WhatsApp</li>
+      <li>App ko online daalna (India server, HTTPS)</li>
+      <li>Compliance se OK + shikayat contact</li>
+      <li>Phone par test, apne number par message</li>
+      <li>2-3 CSP ke saath 2 hafte → phir sab 500 CSP</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>⚠ Dhyan rakhna</h3>
+    <ul>
+      <li>Voxomos speed 6-80 sec - unke server par depend</li>
+      <li>Voxomos har result save karta hai - asli list abhi nahi</li>
+      <li>Asli list ke liye: saving band + India server + agreement + naya key</li>
+    </ul>
+  </div>
+</div>
+<div class="foot">Grahak Sampark · Eko Bharat Ventures</div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+.venv
+.env
+data
+logs
+tests
+docs
+.git
+.pytest_cache
+__pycache__
+*.jpg
+*.jpeg
+*.png
+*.csv

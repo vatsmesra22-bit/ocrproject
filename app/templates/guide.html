@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}CSP guide{% endblock %}
+{% block head %}
+<style>
+main { max-width: 820px; }
+.g-step { display: flex; gap: 16px; align-items: flex-start; padding: 16px 0; border-bottom: 1px dashed var(--line); }
+.g-step:last-child { border-bottom: 0; }
+.g-num { width: 44px; height: 44px; flex: none; border-radius: 14px; background: var(--brand); color: #fff;
+  font-weight: 800; font-size: 20px; display: grid; place-items: center; }
+.g-step h3 { margin: 0 0 4px; font-size: 19px; }
+.g-step p { margin: 0; }
+.g-step .en { color: var(--muted); font-size: 15px; margin-top: 4px; }
+.tips { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.tip { border-radius: 12px; padding: 12px 14px; font-weight: 600; }
+.tip.do { background: var(--green-soft); color: var(--green); }
+.tip.dont { background: var(--red-soft); color: var(--red); }
+.print-only { display: none; }
+@media (max-width: 560px) { .tips { grid-template-columns: 1fr; } }
+@media print {
+  header.top, footer, .no-print { display: none !important; }
+  body { background: #fff; font-size: 14px; }
+  .card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+  .print-only { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+}
+</style>
+{% endblock %}
+{% block main %}
+<div class="print-only">
+  <img src="/static/icon.svg" alt="" style="width:40px;height:40px"><b style="font-size:20px">Grahak Sampark · ग्राहक संपर्क</b>
+</div>
+
+<div class="card">
+  <div class="row-between">
+    <div>
+      <h1 style="margin:0">CSP गाइड / CSP Guide</h1>
+      <p class="lead" style="margin:4px 0 0">निष्क्रिय खातों के ग्राहकों को WhatsApp संदेश - 5 आसान कदम</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="g-step"><div class="g-num">1</div><div>
+    <h3>लॉग इन करें</h3>
+    <p>फोन में लिंक खोलें। अपना <b>CSP कोड</b> और पासवर्ड डालें। पहली बार नया पासवर्ड बनाएं।</p>
+    <p class="en">Open the link on your phone, log in with your CSP code and password. Set your own password the first time.</p>
+  </div></div>
+  <div class="g-step"><div class="g-num">2</div><div>
+    <h3>सूची की फोटो लें 📷</h3>
+    <p><b>"अभी फोटो लें"</b> दबाएं और SBI की सूची का पेज 1 खींचें। कई पेज हैं? बाद में <b>"अगला पेज"</b> से जोड़ें।</p>
+    <p class="en">Tap "Take photo now" and photograph page 1. More pages? Add them with "Next page photo".</p>
+    <p>सूची <b>एक्सेल फ़ाइल</b> में है? <b>"Upload Excel file"</b> दबाकर सीधे फ़ाइल डालें - फोटो की ज़रूरत नहीं।</p>
+  </div></div>
+  <div class="g-step"><div class="g-num">3</div><div>
+    <h3>सूची जाँचें ✅</h3>
+    <p>लगभग 30 सेकंड में ग्राहक दिखेंगे। <b>लाल</b> लाइनें कागज़ से मिलाकर ठीक करें, फिर <b>"सेव"</b> दबाएं।</p>
+    <p class="en">In about 30 seconds the customers appear. Fix the red rows against the paper, then press Save.</p>
+  </div></div>
+  <div class="g-step"><div class="g-num">4</div><div>
+    <h3>WhatsApp से भेजें 📲</h3>
+    <p>टिक लगाएं <b>"मैंने नंबर कागज़ से मिला लिए"</b> → <b>"अपने WhatsApp से भेजें"</b>। फिर हरा बटन
+    <b>"Next customer"</b> दबाएं → WhatsApp खुलेगा, संदेश लिखा होगा → <b>Send</b> दबाएं → वापस आएं → फिर दबाएं।</p>
+    <p class="en">Tick "I matched the numbers with the paper" → "Send from my WhatsApp". Then tap the green "Next customer"
+    button → WhatsApp opens with the message ready → press Send → come back → tap again.</p>
+  </div></div>
+  <div class="g-step"><div class="g-num">5</div><div>
+    <h3>जो WhatsApp पर नहीं हैं</h3>
+    <p><b>"Not on WhatsApp"</b> दबाएं - उन्हें फ़ोन करें। ग्राहक मना करे तो <b>"Said STOP"</b> दबाएं - फिर कोई संदेश नहीं जाएगा।</p>
+    <p class="en">Tap "Not on WhatsApp" and call them instead. If a customer says stop, tap "Said STOP" - they will never be messaged again.</p>
+  </div></div>
+</div>
+
+<div class="card">
+  <h2>अच्छी फोटो के लिए / For a good photo</h2>
+  <div class="tips">
+    <div class="tip do">✔ कागज़ सीधा, अच्छी रोशनी</div>
+    <div class="tip dont">✘ छाया या अंधेरा नहीं</div>
+    <div class="tip do">✔ कॉलम के नाम फोटो में दिखें</div>
+    <div class="tip dont">✘ WhatsApp से आई फोटो नहीं</div>
+    <div class="tip do">✔ फोन स्थिर रखें, टैप करके फोकस</div>
+    <div class="tip dont">✘ स्क्रीनशॉट नहीं</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>ज़रूरी बातें / Important</h2>
+  <ul style="margin:0;padding-left:20px;line-height:1.8">
+    <li>सूची और ग्राहकों के नंबर <b>किसी को फॉरवर्ड न करें</b>, फोन में सेव न करें।</li>
+    <li>हर नंबर <b>कागज़ से मिलाएं</b> - गलत नंबर पर संदेश किसी और को चला जाएगा।</li>
+    <li>पासवर्ड किसी को न बताएं। भूल गए? अपने Eko कोऑर्डिनेटर से संपर्क करें।</li>
+    <li>सूची सिर्फ़ आपके फ़ोन में रहती है, सर्वर पर नहीं - यही फ़ोन इस्तेमाल करें। {{ retention_days }} दिन बाद अपने आप हट जाती है।</li>
+  </ul>
+</div>
+{% endblock %}

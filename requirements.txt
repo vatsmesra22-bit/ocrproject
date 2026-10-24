@@ -1,0 +1,22 @@
+# Offline OCR (PaddleOCR models run via ONNX Runtime - no internet, no API key)
+rapidocr-onnxruntime==1.4.4
+onnxruntime==1.31.0
+opencv-python==5.0.0.93
+numpy==2.4.6
+
+# Web page
+fastapi==0.115.0
+starlette==0.38.6
+uvicorn==0.30.6
+Jinja2==3.1.6
+python-multipart==0.0.32
+itsdangerous==2.2.0
+openpyxl==3.1.5
+
+# WhatsApp Cloud API calls
+httpx==0.28.1
+
+python-dotenv==1.2.4
+
+# Development
+pytest==9.1.1

@@ -1,0 +1,17 @@
+services:
+  app:
+    build: .
+    env_file: .env            # copy .env.example to .env on the server and fill it in
+    environment:
+      - APP_ENV=production
+      - FORWARDED_ALLOW_IPS=172.17.0.1   # Docker host gateway = the reverse proxy on this server; adjust if different
+    ports:
+      - "127.0.0.1:8000:8000"   # only the reverse proxy (HTTPS) on this server can reach it
+    volumes:
+      - sampark_data:/data        # customer lists + database - put on an encrypted disk
+      - sampark_logs:/logs        # agent.log, audit.log
+    restart: unless-stopped
+
+volumes:
+  sampark_data:
+  sampark_logs:

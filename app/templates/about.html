@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}How it works{% endblock %}
+{% block head %}
+<style>
+main { max-width: 1040px; }
+.hero {
+  position: relative; overflow: hidden; border-radius: 24px; color: #fff; padding: 36px 28px;
+  background: radial-gradient(circle at 85% 15%, rgba(255,255,255,.18), transparent 40%),
+              linear-gradient(135deg, #1374d6 0%, #0b5cab 50%, #062f57 100%);
+  box-shadow: 0 10px 30px rgba(7,61,112,.25); margin-bottom: 22px;
+}
+.hero .row { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+.hero img { width: 84px; height: 84px; border-radius: 22px; box-shadow: 0 6px 20px rgba(0,0,0,.25); }
+.hero h1 { font-size: 34px; margin: 0; line-height: 1.15; }
+.hero .tag { font-size: 19px; opacity: .95; margin: 8px 0 0; }
+.hero .tag .hi { color: #dbe9fb; }
+.hero .cta { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+.hero .btn.white { background: #fff; color: var(--brand); }
+.hero .btn.line { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,.7); }
+.section-title { font-size: 22px; margin: 28px 0 12px; }
+.section-title .hi { font-size: 17px; }
+
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.compare .card { margin: 0; }
+.compare .before { border-top: 5px solid var(--red); }
+.compare .after { border-top: 5px solid var(--green); }
+.compare h3 { margin: 0 0 8px; font-size: 18px; }
+.compare ul { margin: 0; padding-left: 20px; color: var(--muted); }
+.compare li { margin: 6px 0; }
+
+.steps4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; position: relative; }
+.step { background: #fff; border-radius: 18px; padding: 20px 16px; text-align: center;
+  box-shadow: var(--shadow); border: 1px solid #e9eef5; position: relative; }
+.step .ic { width: 64px; height: 64px; border-radius: 20px; margin: 0 auto 12px; display: grid; place-items: center; }
+.step .ic svg { width: 34px; height: 34px; }
+.step .n { position: absolute; top: 12px; left: 14px; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--brand); color: #fff; font-weight: 800; font-size: 14px; display: grid; place-items: center; }
+.step h3 { margin: 0 0 6px; font-size: 17px; }
+.step p { margin: 0; color: var(--muted); font-size: 15px; }
+.c1 { background: #e8f1fb; color: #0b5cab; } .c2 { background: #efe9fd; color: #6b3fd4; }
+.c3 { background: #fff4e0; color: #a15c00; } .c4 { background: #e3f5ee; color: #12805c; }
+
+.split { display: grid; grid-template-columns: 1.1fr .9fr; gap: 16px; align-items: start; }
+.bubble { white-space: pre-wrap; background: #e7ffdb; border-radius: 14px 14px 14px 4px; padding: 14px 16px;
+  font-size: 15px; box-shadow: 0 1px 1px rgba(0,0,0,.08); }
+.phone { background: #ece5dd; border-radius: 22px; padding: 18px; border: 8px solid #1b2430; max-width: 380px; margin: 0 auto; }
+.phone .bar { font-size: 13px; color: #075e54; font-weight: 700; margin: -4px 0 10px; }
+.ph { color: #0b5cab; font-weight: 700; }
+
+.safe { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.safe .t { background: #fff; border-radius: 16px; padding: 16px; border: 1px solid #e9eef5; box-shadow: var(--shadow); }
+.safe .t b { display: block; margin: 6px 0 4px; }
+.safe .t span { color: var(--muted); font-size: 14px; }
+.safe .e { font-size: 26px; }
+
+.who { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.who .card { margin: 0; }
+.who h3 { margin: 0 0 6px; }
+.final { text-align: center; padding: 30px 20px; }
+
+@media (max-width: 820px) {
+  .steps4 { grid-template-columns: 1fr 1fr; }
+  .safe { grid-template-columns: 1fr 1fr; }
+  .split { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .hero { padding: 26px 18px; border-radius: 18px; }
+  .hero h1 { font-size: 27px; }
+  .hero .tag { font-size: 16px; }
+  .compare, .who { grid-template-columns: 1fr; }
+  .steps4, .safe { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+{% block main %}
+
+<section class="hero">
+  <div class="row">
+    <img src="/static/icon.svg" alt="">
+    <div style="flex:1;min-width:240px">
+      <h1>Grahak Sampark <span style="opacity:.8">· ग्राहक संपर्क</span></h1>
+      <p class="tag">One photo of the inoperative-account list - and every customer gets a WhatsApp message to come and reactivate.<br>
+      <span class="hi">निष्क्रिय खातों की सूची की एक फोटो - और हर ग्राहक तक WhatsApp संदेश।</span></p>
+    </div>
+  </div>
+  <div class="cta">
+    {% if user %}<a class="btn white" href="/">Open my page / मेरा पेज</a>
+    {% else %}<a class="btn white" href="/login">Log in / लॉग इन</a>{% endif %}
+    <a class="btn line" href="#steps">See how it works ↓</a>
+    <a class="btn line" href="/guide">📘 CSP guide</a>
+  </div>
+</section>
+
+<h2 class="section-title">The problem it solves <span class="hi">/ किस परेशानी का हल</span></h2>
+<div class="compare">
+  <div class="card before">
+    <h3>😩 Today / अभी</h3>
+    <ul>
+      <li>SBI gives each CSP a long printed list of inoperative accounts <span class="hi">- लंबी सूची</span></li>
+      <li>The CSP has to call every customer one by one <span class="hi">- एक-एक को फ़ोन</span></li>
+      <li>Most never hear about it, accounts stay closed <span class="hi">- खाते बंद ही रहते हैं</span></li>
+    </ul>
+  </div>
+  <div class="card after">
+    <h3>😊 With Grahak Sampark / अब</h3>
+    <ul>
+      <li>Take one photo of the list <span class="hi">- बस एक फोटो</span></li>
+      <li>The agent reads every name, mobile and account <span class="hi">- सब अपने आप पढ़ा जाता है</span></li>
+      <li>Each customer gets a WhatsApp message in Hindi + English <span class="hi">- हर ग्राहक को संदेश</span></li>
+    </ul>
+  </div>
+</div>
+
+<h2 class="section-title" id="steps">4 simple steps <span class="hi">/ 4 आसान कदम</span></h2>
+<div class="steps4">
+  <div class="step"><span class="n">1</span>
+    <div class="ic c1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></div>
+    <h3>Photo / फोटो</h3>
+    <p>CSP takes a photo of the list with the phone, or picks one from the gallery.</p>
+  </div>
+  <div class="step"><span class="n">2</span>
+    <div class="ic c2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="13" height="18" rx="2"/><path d="M8 8h5M8 12h5M8 16h3"/><circle cx="17.5" cy="16.5" r="3"/><path d="M20 19l2 2"/></svg></div>
+    <h3>Agent reads / पढ़ता है</h3>
+    <p>Reads the list twice, straightens tilted photos, checks every mobile and account number.</p>
+  </div>
+  <div class="step"><span class="n">3</span>
+    <div class="ic c3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 9l2 2 4-4"/><path d="M8 16h8"/></svg></div>
+    <h3>CSP checks / जाँच</h3>
+    <p>Anything unclear is shown in red. CSP matches with the paper and saves.</p>
+  </div>
+  <div class="step"><span class="n">4</span>
+    <div class="ic c4"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-13.5 7.8L3 21l1.2-4.3A9 9 0 1 1 21 12z"/><path d="M8.5 12.5l2.3 2.3 4.7-4.8"/></svg></div>
+    <h3>WhatsApp / संदेश</h3>
+    <p>One tap per customer - WhatsApp opens with the message ready. Customers come with KYC.</p>
+  </div>
+</div>
+
+<h2 class="section-title">What the customer receives <span class="hi">/ ग्राहक को क्या मिलता है</span></h2>
+<div class="split">
+  <div class="card" style="margin:0">
+    <ul style="margin:0;padding-left:20px;line-height:1.8">
+      <li>Message in <b>Hindi + English</b> <span class="hi">- हिंदी और अंग्रेज़ी</span></li>
+      <li>Only the <b>first name</b> and <b>last 4 digits</b> of the account <span class="hi">- पूरा नंबर कभी नहीं</span></li>
+      <li>The CSP's <b>shop name and address</b> - where to come <span class="hi">- कहाँ आना है</span></li>
+      <li>What to bring: <b>Aadhaar / PAN</b> <span class="hi">- क्या लाना है</span></li>
+      <li>Reply <b>STOP</b> and they are never messaged again <span class="hi">- STOP पर बंद</span></li>
+    </ul>
+  </div>
+  <div class="phone">
+    <div class="bar">WhatsApp</div>
+    <div class="bubble">नमस्ते <span class="ph">[Customer]</span> जी,
+आपका SBI खाता (<span class="ph">XXXX1234</span>) लंबे समय से उपयोग न होने के कारण निष्क्रिय हो गया है।
+इसे फिर से चालू करने के लिए कृपया आधार / पैन लेकर आएं:
+<span class="ph">[CSP name, address]</span>
+
+Dear <span class="ph">[Customer]</span>, your SBI account (<span class="ph">XXXX1234</span>) has become inoperative…</div>
+  </div>
+</div>
+
+<h2 class="section-title">Safe by design <span class="hi">/ पूरी तरह सुरक्षित</span></h2>
+<div class="safe">
+  <div class="t"><div class="e">🔒</div><b>Offline reading</b><span>The photo is read on Eko's own server - never sent to any outside company.</span></div>
+  <div class="t"><div class="e">🗑️</div><b>List stays on the CSP's phone</b><span>The photo is read and forgotten - no list is ever stored on the server; deleted from the phone after {{ retention_days }} days (DPDP Act).</span></div>
+  <div class="t"><div class="e">🎯</div><b>Minimum data</b><span>Only name, mobile and account are kept; father's name, CIF, address are dropped.</span></div>
+  <div class="t"><div class="e">🔁</div><b>Read twice</b><span>Two independent readings - any number that doesn't match is shown in red.</span></div>
+  <div class="t"><div class="e">✋</div><b>CSP has the final say</b><span>Nothing is sent until the CSP checks the list against the paper.</span></div>
+  <div class="t"><div class="e">👤</div><b>Own login for every CSP</b><span>Each CSP sees only their own lists. Every action is recorded.</span></div>
+</div>
+
+<h2 class="section-title">Who uses it <span class="hi">/ कौन इस्तेमाल करता है</span></h2>
+<div class="who">
+  <div class="card"><h3>🏪 CSP</h3>
+    <p class="muted" style="margin:0">Opens the link on the phone, logs in with the CSP code, uploads the list photo, checks it and sends the messages from WhatsApp. Nothing to install.</p></div>
+  <div class="card"><h3>👑 Super admin (Eko)</h3>
+    <p class="muted" style="margin:0">Creates CSP logins, resets passwords, switches CSPs on or off, and sees totals and recent activity for all CSPs.</p></div>
+</div>
+
+<div class="card final" style="margin-top:22px">
+  <h2 style="margin:0 0 8px">Tested on real SBI lists</h2>
+  <p class="muted" style="margin:0 0 18px">On the two sample lists, the agent read <b>102 of 102</b> customers correctly - including a curled phone photo.</p>
+  {% if user %}<a class="btn" href="/">Open my page / मेरा पेज</a>{% else %}<a class="btn" href="/login">Log in / लॉग इन</a>{% endif %}
+</div>
+{% endblock %}

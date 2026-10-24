@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Super admin{% endblock %}
+{% block head %}
+<style>
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.kpi { background: #fff; border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 3px rgba(16,24,40,.08); }
+.kpi b { display: block; font-size: 30px; color: var(--brand); line-height: 1.1; }
+.kpi span { color: var(--muted); font-size: 14px; line-height: 1.35; display: block; }
+.kpi em { font-style: normal; }
+.kpi small { font-size: 12px; }
+.kpi i { font-style: normal; font-size: 22px; }
+.kpi.good { background: #ecfdf3; } .kpi.good b { color: #12805c; }
+.kpis.five { grid-template-columns: repeat(5, 1fr); }
+h2.section { margin: 4px 0 10px; }
+.bar { height: 6px; background: var(--line); border-radius: 3px; margin-top: 4px; min-width: 60px; }
+.bar span { display: block; height: 100%; background: #12805c; border-radius: 3px; }
+details.manage summary { cursor: pointer; list-style: none; }
+details.manage summary::-webkit-details-marker { display: none; }
+details.manage .sub { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 4px; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.actions form { margin: 0; }
+.filebox { border: 2px dashed var(--line); border-radius: 12px; padding: 16px; text-align: center; }
+tr.off td { color: var(--muted); }
+@media (max-width: 900px) { .kpis.five { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px) {
+  .kpis, .kpis.five { grid-template-columns: repeat(2, 1fr); }
+  /* tables become one card per row on phones */
+  table.cards thead { display: none; }
+  table.cards tr { display: block; padding: 12px 0; border-bottom: 1px solid var(--line); }
+  table.cards td { display: block; border: 0; padding: 2px 0; white-space: normal !important; }
+  table.cards td[data-l]::before { content: attr(data-l) ": "; color: var(--muted); font-size: 14px; }
+  .actions { justify-content: flex-start; margin-top: 8px; }
+}
+</style>
+{% endblock %}
+{% block main %}
+<div class="row-between">
+  <div><h1>📊 Dashboard <span class="hi">/ डैशबोर्ड</span></h1>
+  <p class="lead" style="margin:0">Super admin · how the outreach is going, CSP by CSP.<br>
+  <span class="hi">सभी CSP का काम एक नज़र में।</span></p></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a class="btn ghost" href="/guide">📘 CSP guide</a>
+    <a class="btn" href="/admin/report.xlsx">⬇ Download report (Excel)</a>
+  </div>
+</div>
+<div style="height:14px"></div>
+{% if error %}<div class="alert error">{{ error }}</div>{% endif %}
+{% if notice %}<div class="alert ok">{{ notice }}</div>{% endif %}
+
+<h2 class="section">How it is going <span class="hi">/ काम कैसा चल रहा है</span></h2>
+<div class="kpis five">
+  <div class="kpi"><i>👥</i><b>{{ stats.csps }}</b><span>Active CSPs<br><em>सक्रिय CSP</em></span></div>
+  <div class="kpi"><i>📄</i><b>{{ stats.lists - stats.repeats }}</b><span>Different lists tested<br><em>अलग सूचियाँ</em>
+    <br><small>{{ stats.lists }} uploads in all{% if stats.repeats %} - {{ stats.repeats }} were the same list again{% endif %}</small>
+    {% if stats.unread %}<br><small>+ {{ stats.unread }} upload(s) could not be read</small>{% endif %}
+</span></div>
+  <div class="kpi"><i>🧾</i><b>{{ stats.customers }}</b><span>Customers on lists<br><em>सूचियों में ग्राहक</em></span></div>
+  <div class="kpi"><i>📲</i><b>{{ stats.sent }}</b><span>WhatsApp sent (confirmed)<br><em>संदेश भेजे</em></span></div>
+  <div class="kpi good"><i>✅</i><b>{{ stats.came }}</b><span>Came back<br><em>ग्राहक आए</em>
+    {% if stats.customers %}<br><strong>{{ (100 * stats.came / stats.customers) | round(1) }}% of customers</strong>{% endif %}</span></div>
+</div>
+<p class="muted" style="margin:-4px 0 18px;font-size:14px">Counts sent by the CSPs' phones - customer lists stay on the CSP's phone, never on this server.
+A list uploaded again is counted once;
+customers of the same list uploaded again are not added twice (a customer on two different lists counts twice). Flow: list uploaded → customers read → WhatsApp sent → customer came to the CSP.
+<span class="hi">सूची → ग्राहक → संदेश → ग्राहक आए।</span>
+{% for e in earlier %}<br>Includes <b>{{ e.label }}</b>: {{ e.lists - e.repeats }} different lists ({{ e.lists }} uploads, {{ e.repeats }} the same
+list again), {{ e.unread }} could not be read, {{ e.customers }} customers, {{ e.sent }} sent, {{ e.came }} came.{% endfor %}</p>
+
+<div class="card" id="csps">
+  <div class="row-between"><h2 style="margin:0">CSPs ({{ csps|length }}) <span class="hi">/ हर CSP का काम</span></h2></div>
+  {% if not csps %}
+    <p class="muted">No CSPs yet. Add them under ⚙ Manage below.</p>
+  {% else %}
+  <div class="table-wrap">
+  <table class="cards">
+    <thead><tr><th>CSP</th><th>Lists</th><th>Customers</th><th>Sent</th><th>Came</th><th>Last login</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+    {% for c in csps %}
+      <tr class="{{ '' if c.active else 'off' }}">
+        <td><b>{{ c.csp_code }}</b><br><span class="muted" style="font-size:14px">{{ c.name }}{% if c.branch %} · {{ c.branch }}{% endif %}</span></td>
+        {% set pr = progress.get(c.csp_code, {"lists": 0, "repeats": 0, "customers": 0, "sent": 0, "came": 0}) %}
+        <td data-l="Lists">{{ pr.lists - pr.repeats }}{% if pr.repeats %} <small class="muted">(+{{ pr.repeats }} same again)</small>{% endif %}</td>
+        <td data-l="Customers">{{ pr.customers }}</td>
+        <td data-l="Sent">{{ pr.sent }}{% if pr.customers %}<div class="bar"><span style="width:{{ [100, (100 * pr.sent / pr.customers) | round | int] | min }}%"></span></div>{% endif %}</td>
+        <td data-l="Came"><b>{{ pr.came }}</b></td>
+        <td data-l="Last login" style="font-size:14px">{{ (c.last_login | when) or "Never" }}</td>
+        <td>
+          {% if not c.active %}<span class="pill red">Disabled</span>
+          {% elif c.must_change %}<span class="pill amber">Not logged in yet</span>
+          {% else %}<span class="pill green">Active</span>{% endif %}
+        </td>
+        <td>
+          <div class="actions">
+            <form method="post" action="/admin/csp/{{ c.csp_code }}/reset"
+                  onsubmit="return confirm('Give {{ c.csp_code }} a new temporary password?')">
+              <input type="hidden" name="csrf" value="{{ csrf }}">
+              <button class="btn ghost small" type="submit">Reset password</button>
+            </form>
+            <form method="post" action="/admin/csp/{{ c.csp_code }}/active"
+                  onsubmit="return confirm('{{ 'Disable' if c.active else 'Enable' }} {{ c.csp_code }}?')">
+              <input type="hidden" name="csrf" value="{{ csrf }}">
+              <input type="hidden" name="active" value="{{ 0 if c.active else 1 }}">
+              <button class="btn {{ 'danger' if c.active else 'green' }} small" type="submit">{{ 'Disable' if c.active else 'Enable' }}</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Recent activity <span class="hi">/ हाल का काम</span></h2>
+  {% if not activity %}
+    <p class="muted">Nothing yet.</p>
+  {% else %}
+  <div class="table-wrap">
+  <table class="cards">
+    <thead><tr><th>When</th><th>Who · What</th><th>Details</th></tr></thead>
+    <tbody>
+    {% for a in activity %}
+      <tr>
+        <td style="font-size:14px;white-space:nowrap">{{ a.ts | when }}</td>
+        <td><b>{{ a.csp_id or "—" }}</b> · {{ activity_label(a.event) }}</td>
+        <td class="muted" style="font-size:14px">
+          {% if a.rows is defined %}{{ a.rows }} customers{% if a.needs_review %}, {{ a.needs_review }} to fix{% endif %}{% endif %}
+          {% if a.created is defined %}{{ a.created }} new, {{ a.updated }} updated{% if a.errors %}, {{ a.errors }} skipped{% endif %}{% endif %}
+          {% if a.error is defined %}{{ a.error }}{% endif %}
+          {% if a.by is defined %}by {{ a.by }}{% endif %}
+          {% if a.event == "messages_sent" %}{{ (a.sent or 0) }} sent{% if a.failed %}, {{ a.failed }} failed{% endif %}{% if a.skipped %}, {{ a.skipped }} opted out{% endif %}{% endif %}
+          {% if a.messages is defined %}{{ a.messages }} messages{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</div>
+<details class="card manage" {{ 'open' if error or notice else '' }}>
+  <summary><h2 style="display:inline">⚙ Manage <span class="hi">/ प्रबंधन</span></h2>
+  <span class="muted"> - add CSPs, import a sheet, customer data request (tap to open)</span></summary>
+<div class="sub">
+  <h2>Add one CSP <span class="hi">/ एक CSP जोड़ें</span></h2>
+  <form method="post" action="/admin/add-csp">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">
+      <div><label for="code">CSP Code (login ID)</label><input id="code" name="code" type="text" required autocapitalize="characters"></div>
+      <div><label for="cname">CSP / Shop name</label><input id="cname" name="name" type="text" required></div>
+      <div><label for="addr">Shop address</label><input id="addr" name="address" type="text" required></div>
+      <div><label for="cmob">CSP mobile (optional)</label><input id="cmob" name="mobile" type="tel" inputmode="numeric"></div>
+    </div>
+    <div style="margin-top:16px"><button class="btn" type="submit">➕ Add CSP</button></div>
+  </form>
+</div>
+
+<div class="sub">
+  <h2>Add many CSPs from a sheet <span class="hi">/ कई CSP एक साथ</span></h2>
+  <p class="muted" style="margin-top:0">Excel (.xlsx) or CSV with columns <b>CSP Code</b>, <b>CSP Name</b>, <b>Shop Address</b>
+  (and optionally Mobile, Branch). New CSPs get a temporary password; existing ones are updated.
+  <a href="/admin/sheet-template.csv">Download empty template</a></p>
+  <form method="post" action="/admin/import" enctype="multipart/form-data" class="filebox">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <input type="file" name="sheet" accept=".xlsx,.csv" required style="max-width:100%">
+    <div style="margin-top:12px"><button class="btn" type="submit">⬆ Import sheet</button></div>
+  </form>
+</div>
+
+<div class="sub">
+  <h2>Customer data request (DPDP) <span class="hi">/ ग्राहक का अनुरोध</span></h2>
+  <p class="muted" style="margin-top:0">If a customer asks not to be contacted: enter their mobile number.
+  The number is blocked - no CSP can message it again. Customer lists are kept only on CSP phones,
+  never on this server, so nothing else is stored here to erase.</p>
+  <form method="post" action="/admin/erase-customer" id="eraseform"
+        style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div style="flex:1;min-width:200px"><label for="emob" style="margin-top:0">Customer mobile</label>
+      <input id="emob" name="mobile" type="tel" inputmode="numeric" maxlength="13" required></div>
+    <button class="btn danger" type="submit">🚫 Block number</button>
+  </form>
+  <script>
+  document.getElementById('eraseform').addEventListener('submit', function (e) {
+    if (!confirm('Block this number? No CSP can message it again. This cannot be undone.')) e.preventDefault();
+  });
+  </script>
+</div>
+
+</details>
+{% endblock %}
