@@ -22,3 +22,9 @@ csp-passwords*.csv
 
 # Internal notes (work log, tracker, requests) - kept on the laptop only, never public
 internal/
+
+# backups / editor leftovers
+*.bak
+*.orig
+*.swp
+*~

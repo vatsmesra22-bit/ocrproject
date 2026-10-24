@@ -11,3 +11,12 @@ __pycache__
 *.jpeg
 *.png
 *.csv
+# backups and editor leftovers never go into the image
+*.bak
+*.orig
+*.swp
+*~
+# internal notes, CI and password files stay out of the image
+internal
+.github
+csp-passwords*
