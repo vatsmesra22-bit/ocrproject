@@ -341,3 +341,34 @@ def test_earlier_work_still_counted_on_dashboard(env):
     assert "9</b><span>Different lists tested" in page and "341</b><span>Customers on lists" in page
     assert "3 upload(s) could not be read" in page
     assert "Earlier tests (before 23 Oct 2026)" in page
+
+
+def test_app_under_a_sub_path(tmp_path, monkeypatch):
+    """EKO_BASE_PATH=/ocrproject: every link, redirect and page call stays inside it."""
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path / "data")
+    monkeypatch.setattr(config, "LOG_DIR", tmp_path / "logs")
+    monkeypatch.setattr(config, "BASE_PATH", "/ocrproject")
+    users.init_db()
+    users.create_admin("BOSS", "Admin", "adminpass1")
+    pw = users.import_sheet("x.csv", b"CSP Code,CSP Name,Address\nA1,Kendra A,Village A\n")["created"][0][2]
+    with TestClient(web.app, root_path="/ocrproject") as client:
+        r = client.get("/ocrproject/lists", follow_redirects=False)
+        assert r.headers["location"] == "/ocrproject/login"
+        page = client.get("/ocrproject/login").text
+        assert 'action="/ocrproject/login"' in page and 'href="/ocrproject/static/icon.svg"' in page
+        assert not re.search(r'(href|action|src)="/(?!ocrproject|/)', page)
+        tok = re.search(r'name="csrf" value="([^"]+)"', page).group(1)
+        r = client.post("/ocrproject/login", data={"csp_code": "A1", "password": pw, "csrf": tok},
+                        follow_redirects=False)
+        assert r.headers["location"] == "/ocrproject/"
+        assert client.get("/ocrproject/", follow_redirects=False).headers["location"] == "/ocrproject/password"
+        tok = re.search(r'name="csrf" value="([^"]+)"', client.get("/ocrproject/password").text).group(1)
+        client.post("/ocrproject/password", data={"old": pw, "new": "newpass123", "confirm": "newpass123", "csrf": tok})
+        page = client.get("/ocrproject/lists").text
+        assert 'var BASE = "/ocrproject"' in page and "fetch(BASE + url" in page
+        assert not re.search(r'(href|action|src)="/(?!ocrproject|/)', page)
+        tok = re.search(r'name="csrf" value="([^"]+)"', page).group(1)
+        d = client.post("/ocrproject/api/check", json={"rows": ROWS}, headers={"X-CSRF-Token": tok}).json()
+        assert d["counts"]["rows"] == 2
+        r = client.post("/ocrproject/logout", data={"csrf": tok}, follow_redirects=False)
+        assert r.headers["location"] == "/ocrproject/login"

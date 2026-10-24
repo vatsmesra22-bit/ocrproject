@@ -104,6 +104,7 @@ logs/               agent.log, errors.log, audit.log (git-ignored, rotated daily
 | Name | Meaning |
 |---|---|
 | `APP_ENV` | `development` or `production` |
+| `EKO_BASE_PATH` | sub-path the app lives under, e.g. `/ocrproject` (links, redirects, cookie and page calls follow it); empty = root |
 | `SECRET_KEY` | signs CSP login sessions |
 | `LOG_LEVEL`, `LOG_DIR` | logging |
 | `DATA_DIR` | logins, list counts, STOP hashes (no customer lists) |

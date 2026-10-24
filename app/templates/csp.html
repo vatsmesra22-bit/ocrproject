@@ -37,7 +37,7 @@
 {% endblock %}
 {% block main %}
 <noscript><div class="alert error">Please turn on JavaScript - the list is kept on this phone.</div></noscript>
-<div class="alert error" id="loginagain" hidden>Please <a href="/login">log in again</a> - your lists on this phone are safe.<br>
+<div class="alert error" id="loginagain" hidden>Please <a href="{{ base }}/login">log in again</a> - your lists on this phone are safe.<br>
 <span class="hi">कृपया फिर से लॉग इन करें - आपकी सूचियाँ इसी फ़ोन में सुरक्षित हैं।</span></div>
 <div id="app"></div>
 
@@ -46,6 +46,7 @@
 'use strict';
 var CSRF = {{ csrf | tojson }};
 var CSP = {{ user.csp_code | tojson }};
+var BASE = {{ base | tojson }};   // the app may live under a sub-path
 var RETENTION_DAYS = {{ retention_days | int }};
 var FOLLOWUP_DAYS = {{ followup_days | int }};
 var MAX_FOLLOWUPS = {{ max_followups | int }};
@@ -91,7 +92,7 @@ function api(url, opts) {
     opts.headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(opts.json);
   }
-  return fetch(url, opts).then(function (r) {
+  return fetch(BASE + url, opts).then(function (r) {
     return r.json().catch(function () { return {}; }).then(function (d) {
       if (r.status === 401) document.getElementById('loginagain').hidden = false;
       if (!r.ok) throw new Error(d.error || 'Something went wrong - please try again');
@@ -294,7 +295,7 @@ function home() {
     '<p class="muted" style="font-size:14px;margin:10px 0 0">🔒 Your lists are kept <b>only on this phone</b> - not on any server (DPDP). ' +
     'Use the same phone and browser; don\'t clear browser data.<br>' +
     '<span class="hi">आपकी सूचियाँ सिर्फ़ इसी फ़ोन में रहती हैं - किसी सर्वर पर नहीं। यही फ़ोन इस्तेमाल करें, ब्राउज़र का डेटा न मिटाएं।</span></p>' +
-    '<p style="margin:14px 0 0"><a href="/guide">📘 CSP गाइड / How to use (5 steps)</a></p>' +
+    '<p style="margin:14px 0 0"><a href="{{ base }}/guide">📘 CSP गाइड / How to use (5 steps)</a></p>' +
     '<details style="margin-top:16px"><summary style="cursor:pointer;font-weight:600">Tips for a good photo / अच्छी फोटो के लिए</summary>' +
     '<ul class="muted" style="margin:10px 0 0;padding-left:20px">' +
     '<li>Keep the paper flat, in good light, no shadow <span class="hi">— कागज़ सीधा, रोशनी अच्छी, छाया नहीं</span></li>' +

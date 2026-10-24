@@ -31,6 +31,7 @@ curl http://127.0.0.1:8000/healthz   # {"ok":true}
 | Setting | Value |
 |---|---|
 | `APP_ENV` | `production` |
+| `EKO_BASE_PATH` | the sub-path if the app is not at the root of the address, e.g. `/ocrproject`; empty otherwise |
 | `SECRET_KEY` | new long random string: `python3 -c "import secrets;print(secrets.token_urlsafe(48))"` |
 | `OPTOUT_KEY` | another long random string - **never change it after go-live** |
 | `RETENTION_DAYS` / `AUDIT_RETENTION_DAYS` | 30 / 365 unless compliance says otherwise |

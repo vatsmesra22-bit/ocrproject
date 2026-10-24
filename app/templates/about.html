@@ -76,7 +76,7 @@ main { max-width: 1040px; }
 
 <section class="hero">
   <div class="row">
-    <img src="/static/icon.svg" alt="">
+    <img src="{{ base }}/static/icon.svg" alt="">
     <div style="flex:1;min-width:240px">
       <h1>Grahak Sampark <span style="opacity:.8">· ग्राहक संपर्क</span></h1>
       <p class="tag">One photo of the inoperative-account list - and every customer gets a WhatsApp message to come and reactivate.<br>
@@ -84,10 +84,10 @@ main { max-width: 1040px; }
     </div>
   </div>
   <div class="cta">
-    {% if user %}<a class="btn white" href="/">Open my page / मेरा पेज</a>
-    {% else %}<a class="btn white" href="/login">Log in / लॉग इन</a>{% endif %}
+    {% if user %}<a class="btn white" href="{{ base }}/">Open my page / मेरा पेज</a>
+    {% else %}<a class="btn white" href="{{ base }}/login">Log in / लॉग इन</a>{% endif %}
     <a class="btn line" href="#steps">See how it works ↓</a>
-    <a class="btn line" href="/guide">📘 CSP guide</a>
+    <a class="btn line" href="{{ base }}/guide">📘 CSP guide</a>
   </div>
 </section>
 
@@ -178,6 +178,6 @@ Dear <span class="ph">[Customer]</span>, your SBI account (<span class="ph">XXXX
 <div class="card final" style="margin-top:22px">
   <h2 style="margin:0 0 8px">Tested on real SBI lists</h2>
   <p class="muted" style="margin:0 0 18px">On the two sample lists, the agent read <b>102 of 102</b> customers correctly - including a curled phone photo.</p>
-  {% if user %}<a class="btn" href="/">Open my page / मेरा पेज</a>{% else %}<a class="btn" href="/login">Log in / लॉग इन</a>{% endif %}
+  {% if user %}<a class="btn" href="{{ base }}/">Open my page / मेरा पेज</a>{% else %}<a class="btn" href="{{ base }}/login">Log in / लॉग इन</a>{% endif %}
 </div>
 {% endblock %}

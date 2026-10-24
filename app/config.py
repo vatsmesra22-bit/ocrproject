@@ -25,6 +25,10 @@ def _int(name, default):
 
 
 APP_ENV = os.getenv("APP_ENV", "development")
+# The app can live under a sub-path of the server, e.g. https://host/ocrproject/ -
+# then set EKO_BASE_PATH=/ocrproject. Every link, redirect, cookie and page call
+# uses it. Empty = the app is at the root of the address.
+BASE_PATH = ("/" + os.getenv("EKO_BASE_PATH", "").strip().strip("/")).rstrip("/")
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()

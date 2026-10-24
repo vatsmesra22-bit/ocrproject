@@ -6,7 +6,7 @@
   <p class="lead">One-time setup. This page only opens on this computer, and only until the super admin exists.<br>
   <span class="hi">यह सिर्फ़ एक बार होगा।</span></p>
   {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
-  <form method="post" action="/setup">
+  <form method="post" action="{{ base }}/setup">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <label for="name">Your full name <span class="hi">/ आपका नाम</span></label>
     <input id="name" name="name" type="text" value="{{ full_name or '' }}" required autofocus>

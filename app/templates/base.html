@@ -6,8 +6,8 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0b5cab">
 <title>{% block title %}Home{% endblock %} · Grahak Sampark</title>
-<link rel="icon" type="image/svg+xml" href="/static/icon.svg">
-<link rel="apple-touch-icon" href="/static/icon.svg">
+<link rel="icon" type="image/svg+xml" href="{{ base }}/static/icon.svg">
+<link rel="apple-touch-icon" href="{{ base }}/static/icon.svg">
 <style>
 :root {
   --brand: #0b5cab; --brand-dark: #08457f; --brand-soft: #e8f1fb;
@@ -126,15 +126,15 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding: 8px 
 </head>
 <body>
 <header class="top{{ ' in' if user }}">
-  <a class="home" href="/">
-    <img class="logo" src="/static/icon.svg" alt="">
+  <a class="home" href="{{ base }}/">
+    <img class="logo" src="{{ base }}/static/icon.svg" alt="">
     <div class="app"><b>Grahak Sampark <span style="opacity:.85;font-weight:600">· ग्राहक संपर्क</span></b>
-      <span class="by">{% if eko_logo %}<img src="/static/eko-logo.png" alt="Eko">{% endif %}by Eko Bharat Ventures</span></div>
+      <span class="by">{% if eko_logo %}<img src="{{ base }}/static/eko-logo.png" alt="Eko">{% endif %}by Eko Bharat Ventures</span></div>
   </a>
-  <a class="btn-info" href="/about" title="How it works / कैसे काम करता है"><i class="i">i</i><span class="lbl">How it works</span></a>
+  <a class="btn-info" href="{{ base }}/about" title="How it works / कैसे काम करता है"><i class="i">i</i><span class="lbl">How it works</span></a>
   {% if user %}
   <div class="who"><b>{{ user.csp_code }}</b><br><span>{{ user.name }}</span></div>
-  <form method="post" action="/logout">
+  <form method="post" action="{{ base }}/logout">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <button class="btn-out" type="submit">Logout</button>
   </form>
@@ -144,7 +144,7 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding: 8px 
 {% block main %}{% endblock %}
 </main>
 <footer>Customer lists stay only on the CSP's phone ({{ retention_days }} days) - never on the server, never shared.
-<a href="/privacy">Privacy notice / गोपनीयता सूचना</a><br>
+<a href="{{ base }}/privacy">Privacy notice / गोपनीयता सूचना</a><br>
 Grahak Sampark · Eko Bharat Ventures · for SBI CSPs</footer>
 </body>
 </html>

@@ -42,6 +42,11 @@ IDLE_TIMEOUT_SECONDS = 30 * 60
 SESSION_MAX_AGE = 8 * 60 * 60
 
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
+
+
+def u(path):
+    """A path inside the app, with the sub-path the app lives under (EKO_BASE_PATH)."""
+    return config.BASE_PATH + path
 templates.env.globals["retention_days"] = config.RETENTION_DAYS
 STATIC_DIR = Path(__file__).parent / "static"
 # Eko's official logo is shown in the header once its file is placed here
@@ -68,6 +73,7 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.add_middleware(
     SessionMiddleware, secret_key=config.SECRET_KEY or secrets.token_urlsafe(32),
     session_cookie="iaa_session", max_age=SESSION_MAX_AGE, same_site="strict",
+    path=config.BASE_PATH or "/",
     https_only=config.APP_ENV == "production")
 
 
@@ -93,7 +99,7 @@ class Redirect(Exception):
 
 @app.exception_handler(Redirect)
 async def _redirect(request, exc):
-    return RedirectResponse(exc.url, status_code=303)
+    return RedirectResponse(u(exc.url), status_code=303)
 
 
 class ApiError(Exception):
@@ -137,6 +143,7 @@ def _current_user(request, role=None, allow_must_change=False):
 
 def render(request, name, **ctx):
     ctx.setdefault("user", None)
+    ctx.setdefault("base", config.BASE_PATH)
     return templates.TemplateResponse(request, name, {"csrf": _csrf(request), **ctx})
 
 
@@ -155,7 +162,7 @@ templates.env.filters["when"] = _fmt_time
 
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon():
-    return RedirectResponse("/static/icon.svg", status_code=301)
+    return RedirectResponse(u("/static/icon.svg"), status_code=301)
 
 
 @app.get("/about", response_class=HTMLResponse)
@@ -179,7 +186,7 @@ def healthz():
 @app.get("/", include_in_schema=False)
 def home(request: Request):
     user = _current_user(request)
-    return RedirectResponse("/admin" if user["role"] == "admin" else "/lists", status_code=303)
+    return RedirectResponse(u("/admin" if user["role"] == "admin" else "/lists"), status_code=303)
 
 
 # ---------- first-time setup: create the super admin in the browser ----------
@@ -200,7 +207,7 @@ def _setup_allowed(request):
 @app.get("/setup", response_class=HTMLResponse)
 def setup_page(request: Request):
     if not _setup_allowed(request):
-        return RedirectResponse("/login", status_code=303)
+        return RedirectResponse(u("/login"), status_code=303)
     return render(request, "setup.html")
 
 
@@ -209,7 +216,7 @@ def setup_create(request: Request, name: str = Form(""), code: str = Form(""),
                  password: str = Form(""), confirm: str = Form(""), csrf: str = Form("")):
     _check_csrf(request, csrf)
     if not _setup_allowed(request):
-        return RedirectResponse("/login", status_code=303)
+        return RedirectResponse(u("/login"), status_code=303)
     try:
         if password != confirm:
             raise users.UserError("The two passwords do not match")
@@ -219,7 +226,7 @@ def setup_create(request: Request, name: str = Form(""), code: str = Form(""),
     audit("admin_created", csp_id=code)
     request.session.clear()
     request.session.update({"user": code, "seen": time.time(), "csrf": secrets.token_urlsafe(24)})
-    return RedirectResponse("/admin", status_code=303)
+    return RedirectResponse(u("/admin"), status_code=303)
 
 
 def _local_reset_allowed(request):
@@ -233,7 +240,7 @@ def _local_reset_allowed(request):
 @app.get("/reset-admin", response_class=HTMLResponse)
 def reset_admin_page(request: Request):
     if not _local_reset_allowed(request):
-        return RedirectResponse("/login", status_code=303)
+        return RedirectResponse(u("/login"), status_code=303)
     admins = [u["csp_code"] for u in users.list_users() if u["role"] == "admin"]
     return render(request, "reset_admin.html", code=admins[0])
 
@@ -243,7 +250,7 @@ def reset_admin(request: Request, code: str = Form(""), password: str = Form("")
                 confirm: str = Form(""), csrf: str = Form("")):
     _check_csrf(request, csrf)
     if not _local_reset_allowed(request):
-        return RedirectResponse("/login", status_code=303)
+        return RedirectResponse(u("/login"), status_code=303)
     try:
         if password != confirm:
             raise users.UserError("The two passwords do not match")
@@ -254,13 +261,13 @@ def reset_admin(request: Request, code: str = Form(""), password: str = Form("")
     audit("admin_password_reset", csp_id=code, where="local")
     request.session.clear()
     request.session.update({"user": code, "seen": time.time(), "csrf": secrets.token_urlsafe(24)})
-    return RedirectResponse("/admin", status_code=303)
+    return RedirectResponse(u("/admin"), status_code=303)
 
 
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request, expired: int = 0):
     if _setup_allowed(request):
-        return RedirectResponse("/setup", status_code=303)
+        return RedirectResponse(u("/setup"), status_code=303)
     return render(request, "login.html", local_reset=_local_reset_allowed(request),
                   info="Please log in again / कृपया फिर से लॉग इन करें" if expired else None)
 
@@ -279,7 +286,7 @@ def login(request: Request, csp_code: str = Form(""), password: str = Form(""),
     request.session.update({"user": user["csp_code"], "seen": time.time(),
                             "csrf": secrets.token_urlsafe(24)})
     audit("login", csp_id=user["csp_code"], role=user["role"])
-    return RedirectResponse("/", status_code=303)
+    return RedirectResponse(u("/"), status_code=303)
 
 
 @app.post("/logout")
@@ -289,7 +296,7 @@ def logout(request: Request, csrf: str = Form("")):
     request.session.clear()
     if code:
         audit("logout", csp_id=code)
-    return RedirectResponse("/login", status_code=303)
+    return RedirectResponse(u("/login"), status_code=303)
 
 
 @app.get("/password", response_class=HTMLResponse)
@@ -310,7 +317,7 @@ def password_change(request: Request, old: str = Form(""), new: str = Form(""),
     except users.UserError as e:
         return render(request, "password.html", user=user, error=str(e))
     audit("password_changed", csp_id=user["csp_code"])
-    return RedirectResponse("/", status_code=303)
+    return RedirectResponse(u("/"), status_code=303)
 
 
 # ---------- CSP: lists (kept only on the CSP's phone) ----------
@@ -580,7 +587,7 @@ def admin_active(request: Request, code: str, active: int = Form(...), csrf: str
         pass
     audit("csp_enabled" if active else "csp_disabled", csp_id=users.normalise_code(code),
           by=user["csp_code"])
-    return RedirectResponse("/admin#csps", status_code=303)
+    return RedirectResponse(u("/admin#csps"), status_code=303)
 
 
 @app.get("/admin/report.xlsx")

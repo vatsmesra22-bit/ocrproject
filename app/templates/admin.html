@@ -39,8 +39,8 @@ tr.off td { color: var(--muted); }
   <p class="lead" style="margin:0">Super admin · how the outreach is going, CSP by CSP.<br>
   <span class="hi">सभी CSP का काम एक नज़र में।</span></p></div>
   <div style="display:flex;gap:8px;flex-wrap:wrap">
-    <a class="btn ghost" href="/guide">📘 CSP guide</a>
-    <a class="btn" href="/admin/report.xlsx">⬇ Download report (Excel)</a>
+    <a class="btn ghost" href="{{ base }}/guide">📘 CSP guide</a>
+    <a class="btn" href="{{ base }}/admin/report.xlsx">⬇ Download report (Excel)</a>
   </div>
 </div>
 <div style="height:14px"></div>
@@ -91,12 +91,12 @@ list again), {{ e.unread }} could not be read, {{ e.customers }} customers, {{ e
         </td>
         <td>
           <div class="actions">
-            <form method="post" action="/admin/csp/{{ c.csp_code }}/reset"
+            <form method="post" action="{{ base }}/admin/csp/{{ c.csp_code }}/reset"
                   onsubmit="return confirm('Give {{ c.csp_code }} a new temporary password?')">
               <input type="hidden" name="csrf" value="{{ csrf }}">
               <button class="btn ghost small" type="submit">Reset password</button>
             </form>
-            <form method="post" action="/admin/csp/{{ c.csp_code }}/active"
+            <form method="post" action="{{ base }}/admin/csp/{{ c.csp_code }}/active"
                   onsubmit="return confirm('{{ 'Disable' if c.active else 'Enable' }} {{ c.csp_code }}?')">
               <input type="hidden" name="csrf" value="{{ csrf }}">
               <input type="hidden" name="active" value="{{ 0 if c.active else 1 }}">
@@ -145,7 +145,7 @@ list again), {{ e.unread }} could not be read, {{ e.customers }} customers, {{ e
   <span class="muted"> - add CSPs, import a sheet, customer data request (tap to open)</span></summary>
 <div class="sub">
   <h2>Add one CSP <span class="hi">/ एक CSP जोड़ें</span></h2>
-  <form method="post" action="/admin/add-csp">
+  <form method="post" action="{{ base }}/admin/add-csp">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 12px">
       <div><label for="code">CSP Code (login ID)</label><input id="code" name="code" type="text" required autocapitalize="characters"></div>
@@ -161,8 +161,8 @@ list again), {{ e.unread }} could not be read, {{ e.customers }} customers, {{ e
   <h2>Add many CSPs from a sheet <span class="hi">/ कई CSP एक साथ</span></h2>
   <p class="muted" style="margin-top:0">Excel (.xlsx) or CSV with columns <b>CSP Code</b>, <b>CSP Name</b>, <b>Shop Address</b>
   (and optionally Mobile, Branch). New CSPs get a temporary password; existing ones are updated.
-  <a href="/admin/sheet-template.csv">Download empty template</a></p>
-  <form method="post" action="/admin/import" enctype="multipart/form-data" class="filebox">
+  <a href="{{ base }}/admin/sheet-template.csv">Download empty template</a></p>
+  <form method="post" action="{{ base }}/admin/import" enctype="multipart/form-data" class="filebox">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <input type="file" name="sheet" accept=".xlsx,.csv" required style="max-width:100%">
     <div style="margin-top:12px"><button class="btn" type="submit">⬆ Import sheet</button></div>
@@ -174,7 +174,7 @@ list again), {{ e.unread }} could not be read, {{ e.customers }} customers, {{ e
   <p class="muted" style="margin-top:0">If a customer asks not to be contacted: enter their mobile number.
   The number is blocked - no CSP can message it again. Customer lists are kept only on CSP phones,
   never on this server, so nothing else is stored here to erase.</p>
-  <form method="post" action="/admin/erase-customer" id="eraseform"
+  <form method="post" action="{{ base }}/admin/erase-customer" id="eraseform"
         style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <div style="flex:1;min-width:200px"><label for="emob" style="margin-top:0">Customer mobile</label>

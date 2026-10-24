@@ -6,7 +6,7 @@
   <p class="lead">Works only on this computer. On the live server this page is switched off.<br>
   <span class="hi">यह सिर्फ़ इसी कंप्यूटर पर काम करता है।</span></p>
   {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
-  <form method="post" action="/reset-admin">
+  <form method="post" action="{{ base }}/reset-admin">
     <input type="hidden" name="csrf" value="{{ csrf }}">
     <label for="code">Login ID <span class="hi">/ लॉगिन ID</span></label>
     <input id="code" name="code" type="text" value="{{ code or '' }}" autocapitalize="characters"

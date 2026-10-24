@@ -82,7 +82,9 @@ def main(argv=None):
             # Real client IPs come from the reverse proxy's X-Forwarded-For, trusted
             # only from FORWARDED_ALLOW_IPS (never "*"). One worker: readings in
             # progress are held in this process's memory (reader.py).
+            from app import config
             uvicorn.run("app.web:app", host=args.host, port=args.port, proxy_headers=True,
+                        root_path=config.BASE_PATH,  # app under a sub-path (EKO_BASE_PATH)
                         log_config=None,  # use our log files (logging_setup.py)
                         forwarded_allow_ips=os.getenv("FORWARDED_ALLOW_IPS", "127.0.0.1"),
                         workers=1)

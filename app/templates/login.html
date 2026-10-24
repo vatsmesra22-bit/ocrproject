@@ -31,7 +31,7 @@ main { max-width: 1000px; }
 {% block main %}
 <div class="login-wrap">
   <section class="intro">
-    <img src="/static/icon.svg" alt="">
+    <img src="{{ base }}/static/icon.svg" alt="">
     <h2>Reach every inoperative-account customer - from one photo</h2>
     <p>निष्क्रिय खातों के हर ग्राहक तक - बस एक फोटो से</p>
     <ol>
@@ -40,7 +40,7 @@ main { max-width: 1000px; }
       <li><span class="k">✅</span><div>You check against the paper<small>कागज़ से मिलाएं</small></div></li>
       <li><span class="k">📲</span><div>Message on WhatsApp<small>WhatsApp पर संदेश</small></div></li>
     </ol>
-    <a class="more" href="/about">See how it works →</a>
+    <a class="more" href="{{ base }}/about">See how it works →</a>
   </section>
 
   <div class="card login-card">
@@ -48,7 +48,7 @@ main { max-width: 1000px; }
     <p class="lead">Log in with your CSP code<br><span class="hi">अपने CSP कोड से लॉग इन करें</span></p>
     {% if error %}<div class="alert error">{{ error }}</div>{% endif %}
     {% if info %}<div class="alert info">{{ info }}</div>{% endif %}
-    <form method="post" action="/login" autocomplete="on">
+    <form method="post" action="{{ base }}/login" autocomplete="on">
       <input type="hidden" name="csrf" value="{{ csrf }}">
       <label for="csp_code">CSP Code / Login ID <span class="hi">/ CSP कोड</span></label>
       <input id="csp_code" name="csp_code" type="text" value="{{ csp_code or '' }}"
@@ -60,7 +60,7 @@ main { max-width: 1000px; }
     <p class="muted" style="margin:18px 0 0;font-size:14px">Forgot password? Please contact your Eko coordinator.<br>
     <span class="hi">पासवर्ड भूल गए? अपने Eko कोऑर्डिनेटर से संपर्क करें।</span></p>
     {% if local_reset %}
-    <p style="margin:12px 0 0;font-size:14px"><a href="/reset-admin">Super admin password bhool gaye? (sirf is computer par)</a></p>
+    <p style="margin:12px 0 0;font-size:14px"><a href="{{ base }}/reset-admin">Super admin password bhool gaye? (sirf is computer par)</a></p>
     {% endif %}
   </div>
 </div>
