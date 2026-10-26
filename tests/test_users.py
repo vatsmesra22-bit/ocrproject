@@ -107,3 +107,13 @@ def test_set_admin_password_unlocks(monkeypatch):
     assert users.authenticate("BOSS", "newadmin22")["role"] == "admin"
     with pytest.raises(users.UserError):
         users.set_admin_password("NOBODY", "newadmin22")
+
+
+def test_first_password_from_csp_name_must_be_changed(tmp_path, monkeypatch):
+    from app import config, users
+    monkeypatch.setattr(config, "DATA_DIR", tmp_path / "data")
+    users.init_db()
+    r = users.import_sheet("x.csv", b"CSP Code,CSP Name,Address\nA1,Ram Kumar,Village A\n", name_passwords=True)
+    assert r["created"] == [("A1", "Ram Kumar", "ramkumar")]
+    user = users.authenticate("a1", "ramkumar")
+    assert user["must_change"] == 1          # the app makes them set their own password

@@ -506,14 +506,15 @@ def admin(request: Request):
 
 
 @app.post("/admin/import", response_class=HTMLResponse)
-async def admin_import(request: Request, sheet: UploadFile, csrf: str = Form("")):
+async def admin_import(request: Request, sheet: UploadFile, csrf: str = Form(""),
+                       name_passwords: str = Form("")):
     _check_csrf(request, csrf)
     user = _current_user(request, role="admin")
     data = await sheet.read(5 * 1024 * 1024 + 1)
     try:
         if len(data) > 5 * 1024 * 1024:
             raise users.UserError("Sheet is too large (max 5 MB)")
-        result = users.import_sheet(sheet.filename or "", data)
+        result = users.import_sheet(sheet.filename or "", data, name_passwords=bool(name_passwords))
     except users.UserError as e:
         return _admin_page(request, user, error=str(e))
     audit("csps_imported", csp_id=user["csp_code"], created=len(result["created"]),

@@ -27,6 +27,8 @@ def main(argv=None):
     sub.add_parser("create-admin")
     im = sub.add_parser("import-csps")
     im.add_argument("sheet")
+    im.add_argument("--name-passwords", action="store_true",
+                    help="first-login password = CSP name (small letters, no spaces)")
     im.add_argument("--out", default="csp-passwords.csv",
                     help="where to write new CSPs' temporary passwords")
     sub.add_parser("reset-admin-password")
@@ -66,7 +68,7 @@ def main(argv=None):
         elif args.cmd == "import-csps":
             users.init_db()
             p = Path(args.sheet)
-            result = users.import_sheet(p.name, p.read_bytes())
+            result = users.import_sheet(p.name, p.read_bytes(), name_passwords=args.name_passwords)
             if result["created"]:
                 with open(args.out, "w", newline="", encoding="utf-8-sig") as f:
                     w = csv.writer(f)

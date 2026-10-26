@@ -230,9 +230,17 @@ def _map_header(header):
     return mapping
 
 
-def import_sheet(filename, data):
+def name_password(name):
+    """First-login password made from the CSP's name: 'Ram Kumar' -> 'ramkumar'.
+    Easy to tell the CSP; they must set their own password at first login."""
+    return "".join(ch for ch in name.lower() if ch.isalnum())
+
+
+def import_sheet(filename, data, name_passwords=False):
     """Create new CSPs and update existing ones. Returns
-    {"created": [(code, name, temp_password)], "updated": n, "errors": [str]}."""
+    {"created": [(code, name, temp_password)], "updated": n, "errors": [str]}.
+    name_passwords: the first-login password is the CSP's name (see name_password)
+    instead of a random one; either way the CSP must change it at first login."""
     rows = [r for r in _read_sheet(filename, data) if any(str(c).strip() for c in r)]
     if not rows:
         raise UserError("The sheet is empty")
@@ -273,7 +281,7 @@ def import_sheet(filename, data):
                              " updated_at = ? WHERE csp_code = ?", values)
                 updated += 1
             else:
-                pw = temp_password()
+                pw = (name_password(cell("name")) if name_passwords else "") or temp_password()
                 conn.execute(
                     "INSERT INTO users (name, address, mobile, branch, updated_at, csp_code,"
                     " role, pw_hash, must_change, created_at) VALUES (?, ?, ?, ?, ?, ?, 'csp', ?, 1, ?)",
