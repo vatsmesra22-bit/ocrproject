@@ -28,7 +28,7 @@ def main(argv=None):
     im = sub.add_parser("import-csps")
     im.add_argument("sheet")
     im.add_argument("--name-passwords", action="store_true",
-                    help="first-login password = CSP name (small letters, no spaces)")
+                    help="password = CSP name (small letters, no spaces)")
     im.add_argument("--out", default="csp-passwords.csv",
                     help="where to write new CSPs' temporary passwords")
     sub.add_parser("reset-admin-password")

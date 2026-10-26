@@ -231,16 +231,17 @@ def _map_header(header):
 
 
 def name_password(name):
-    """First-login password made from the CSP's name: 'Ram Kumar' -> 'ramkumar'.
-    Easy to tell the CSP; they must set their own password at first login."""
+    """Password made from the CSP's name: 'Ram Kumar' -> 'ramkumar'. Easy to tell the
+    CSP; it stays (no forced change) - Pranjal's choice. Lists are not on the server,
+    so a guessed login shows no customer data; the login lock still applies."""
     return "".join(ch for ch in name.lower() if ch.isalnum())
 
 
 def import_sheet(filename, data, name_passwords=False):
     """Create new CSPs and update existing ones. Returns
     {"created": [(code, name, temp_password)], "updated": n, "errors": [str]}.
-    name_passwords: the first-login password is the CSP's name (see name_password)
-    instead of a random one; either way the CSP must change it at first login."""
+    name_passwords: the password is the CSP's name (see name_password) and stays;
+    otherwise a random temporary one that must be changed at first login."""
     rows = [r for r in _read_sheet(filename, data) if any(str(c).strip() for c in r)]
     if not rows:
         raise UserError("The sheet is empty")
@@ -284,7 +285,7 @@ def import_sheet(filename, data, name_passwords=False):
                 pw = (name_password(cell("name")) if name_passwords else "") or temp_password()
                 conn.execute(
                     "INSERT INTO users (name, address, mobile, branch, updated_at, csp_code,"
-                    " role, pw_hash, must_change, created_at) VALUES (?, ?, ?, ?, ?, ?, 'csp', ?, 1, ?)",
-                    values + (hash_password(pw), now))
+                    " role, pw_hash, must_change, created_at) VALUES (?, ?, ?, ?, ?, ?, 'csp', ?, ?, ?)",
+                    values + (hash_password(pw), 0 if name_passwords else 1, now))
                 created.append((code, cell("name"), pw))
     return {"created": created, "updated": updated, "errors": errors}
