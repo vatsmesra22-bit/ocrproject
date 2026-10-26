@@ -232,7 +232,7 @@ def _map_header(header):
 
 def name_password(name):
     """Password made from the CSP's name: 'Ram Kumar' -> 'ramkumar'. Easy to tell the
-    CSP; it stays (no forced change) - Pranjal's choice. Lists are not on the server,
+    CSP; it stays (no forced change) - the project owner's choice. Lists are not on the server,
     so a guessed login shows no customer data; the login lock still applies."""
     return "".join(ch for ch in name.lower() if ch.isalnum())
 

@@ -116,4 +116,4 @@ def test_password_from_csp_name_stays(tmp_path, monkeypatch):
     r = users.import_sheet("x.csv", b"CSP Code,CSP Name,Address\nA1,Ram Kumar,Village A\n", name_passwords=True)
     assert r["created"] == [("A1", "Ram Kumar", "ramkumar")]
     user = users.authenticate("a1", "ramkumar")
-    assert user["must_change"] == 0          # Pranjal's choice: no forced change
+    assert user["must_change"] == 0          # owner's choice: no forced change
