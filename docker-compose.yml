@@ -8,7 +8,7 @@ services:
     ports:
       - "127.0.0.1:8000:8000"   # only the reverse proxy (HTTPS) on this server can reach it
     volumes:
-      - sampark_data:/data        # customer lists + database - put on an encrypted disk
+      - sampark_data:/data        # logins, list counts, STOP hashes (no customer lists)
       - sampark_logs:/logs        # agent.log, audit.log
     restart: unless-stopped
 

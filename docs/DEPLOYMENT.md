@@ -97,3 +97,23 @@ OCR engine: keep `OCR_ENGINE=local` (default). `voxomos` only after the four
 conditions in docs/DATA_PROTECTION.md are met; then also set `VOXOMOS_API_KEY`.
 
 Run **one** container only: readings in progress are held in that process's memory.
+
+
+## Auto-deploy (push to GitHub → live in ~5 minutes)
+
+`tools/auto_deploy.sh` runs on the server every 5 minutes. When GitHub has a newer
+commit on `master` **and its tests passed on GitHub**, it pulls it, rebuilds the app
+and checks `/healthz`; if the new version is not healthy it goes back to the
+previous one. `.env`, the database and the logs are never touched.
+
+Set up once on the server (the app folder must be a `git clone` of the repo):
+
+```bash
+cd /path/to/the/app            # the git clone, e.g. /home/<user>/ocrproject
+chmod +x tools/auto_deploy.sh
+( crontab -l 2>/dev/null; echo "*/5 * * * * $PWD/tools/auto_deploy.sh >> $HOME/auto_deploy.log 2>&1" ) | crontab -
+```
+
+Check it: `tail -f ~/auto_deploy.log` - after a push you should see
+`deploying ...` then `live: ... is healthy` within ~5 minutes.
+The super admin is still created once by hand (`create-admin`, section 4).
